@@ -10,28 +10,22 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class ContractResponse {
+public class ContractListResponse {
 
     private Long contractId;
-    private String analysisId;
     private String title;
-    private String fileUrl;
     private boolean bookmark;
     private ContractType contractType;
     private ContractStatus status;
-    private String rawText;
     private LocalDateTime createdAt;
 
-    public static ContractResponse from(Contract contract) {
-        return ContractResponse.builder()
+    public static ContractListResponse from(Contract contract) {
+        return ContractListResponse.builder()
                 .contractId(contract.getContractId())
-                .analysisId(contract.getAnalysisId())
                 .title(contract.getTitle())
-                .fileUrl(contract.getFileUrl())
                 .bookmark(contract.isBookmark())
                 .contractType(contract.getContractType())
                 .status(contract.getStatus())
-                .rawText(contract.getRawText())
                 .createdAt(contract.getCreatedDate())
                 .build();
     }

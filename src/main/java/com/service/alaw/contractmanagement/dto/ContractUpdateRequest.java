@@ -1,10 +1,11 @@
 package com.service.alaw.contractmanagement.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-public record ContractUpdateRequest(
-    @NotBlank
-    @Size(max = 200)
-    String title
-) {}
+@Getter
+@NoArgsConstructor
+public class ContractUpdateRequest {
+
+    private String title;
+}

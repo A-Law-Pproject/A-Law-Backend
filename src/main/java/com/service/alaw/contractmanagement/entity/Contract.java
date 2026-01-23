@@ -1,75 +1,83 @@
 package com.service.alaw.contractmanagement.entity;
 
+import com.service.alaw.platform.BaseTimeEntity;
 import jakarta.persistence.*;
-import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-    name = "contracts",
-    indexes = {
-        @Index(name = "idx_contract_user", columnList = "userId"),
-        @Index(name = "idx_contract_user_deleted", columnList = "userId, deleted")
-    }
-)
-public class Contract {
+@Table(name = "contract")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Contract extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "contract_id")
+    private Long contractId;
+
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
+
+    @Column(name = "analysis_id")
+    private String analysisId;
 
     @Column(nullable = false)
-    private Long userId;
-
-    @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(length = 1000)
+    @Column(name = "file_url")
     private String fileUrl;
 
-    @Lob
-    private String content;
-
     @Column(nullable = false)
-    private boolean bookmarked = false;
+    private boolean bookmark;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contract_type")
+    private ContractType contractType;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean deleted = false;
+    private ContractStatus status;
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    @Column(name = "raw_text", columnDefinition = "TEXT")
+    private String rawText;
 
-    protected Contract() {}
-
-    public Contract(Long userId, String title, String fileUrl, String content) {
-        this.userId = userId;
+    @Builder
+    public Contract(Long memberId, String title, String fileUrl, ContractType contractType) {
+        this.memberId = memberId;
         this.title = title;
         this.fileUrl = fileUrl;
-        this.content = content;
+        this.contractType = contractType;
+        this.bookmark = false;
+        this.status = ContractStatus.PENDING;
     }
 
-    @PrePersist
-    void onCreate() {
-        createdAt = updatedAt = Instant.now();
+    // 비즈니스 로직
+    public void update(String title) {
+        if (title != null) {
+            this.title = title;
+        }
     }
 
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = Instant.now();
+    public void bookmark() {
+        this.bookmark = true;
     }
 
-    // getters
-    public Long getId() { return id; }
-    public Long getUserId() { return userId; }
-    public String getTitle() { return title; }
-    public String getFileUrl() { return fileUrl; }
-    public String getContent() { return content; }
-    public boolean isBookmarked() { return bookmarked; }
-    public boolean isDeleted() { return deleted; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public void unbookmark() {
+        this.bookmark = false;
+    }
 
-    // domain behavior
-    public void updateTitle(String title) { this.title = title; }
-    public void setBookmarked(boolean bookmarked) { this.bookmarked = bookmarked; }
-    public void softDelete() { this.deleted = true; }
+    public void updateStatus(ContractStatus status) {
+        this.status = status;
+    }
+
+    public void updateAnalysisId(String analysisId) {
+        this.analysisId = analysisId;
+    }
+
+    public void updateRawText(String rawText) {
+        this.rawText = rawText;
+    }
 }
