@@ -1,0 +1,89 @@
+package com.service.alaw.platform.contract.domain.entity;
+
+import com.service.alaw.platform.BaseTimeEntity;
+import com.service.alaw.platform.user.domain.entity.User;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+@Table(name = "contract")
+public class Contract extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "contract_id")
+    private Long contractId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "User_id", nullable = false)
+    private User User;
+
+    @Column(name = "analysis_id", length = 255)
+    private String analysisId;
+
+    @Column(name = "title", nullable = false, length = 255)
+    private String title;
+
+    @Column(name = "file_url", length = 255)
+    private String fileUrl;
+
+    @Column(name = "bookmark", nullable = false)
+    private Boolean bookmark;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contract_type")
+    private ContractType contractType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ContractStatus status;
+
+    @Column(name = "raw_text", columnDefinition = "TEXT")
+    private String rawText;
+
+    @Builder
+    protected Contract(User User, String title, String fileUrl, ContractType contractType) {
+        this.User = User;
+        this.title = title;
+        this.fileUrl = fileUrl;
+        this.contractType = contractType;
+        this.bookmark = false;
+        this.status = ContractStatus.PENDING;
+    }
+
+    public static Contract of(User User, String title, String fileUrl, ContractType contractType) {
+        return Contract.builder()
+                .User(User)
+                .title(title)
+                .fileUrl(fileUrl)
+                .contractType(contractType)
+                .build();
+    }
+
+    public void updateAnalysisId(String analysisId) {
+        this.analysisId = analysisId;
+    }
+
+    public void updateStatus(ContractStatus status) {
+        this.status = status;
+    }
+
+    public void updateRawText(String rawText) {
+        this.rawText = rawText;
+    }
+
+    public void toggleBookmark() {
+        this.bookmark = !this.bookmark;
+    }
+
+    public void updateTitle(String title) {
+        if (title != null) {
+            this.title = title;
+        }
+    }
+}

@@ -1,19 +1,17 @@
 package com.service.alaw.platform.user.domain.entity;
 
 import com.service.alaw.platform.BaseTimeEntity;
-import com.service.alaw.platform.contract.domain.document.Contract;
+import com.service.alaw.platform.user.domain.entity.IsDelete;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@Table(name = "users", indexes = @Index(name = "idx_user_email", columnList = "email", unique = true))
+@Table(name = "users")
 public class User extends BaseTimeEntity {
 
     @Id
@@ -21,74 +19,49 @@ public class User extends BaseTimeEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Column(length = 1000)
-    private String imageUrl;
-
-    @Column(nullable = false)
-    private String nickname;
-
-    @Column(nullable = false)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private UserRole role;
 
-    @Column(nullable = false)
-    private boolean deleted;
+    @Column(name = "profile_image", length = 255)
+    private String profileImage;
 
-    /// 빌더 생성자
+    @Enumerated(EnumType.STRING)
+    @Column(name = "is_delete", nullable = false)
+    private IsDelete isDelete;
+
     @Builder
-    protected User(String name, String imageUrl, String nickname, String email, String password, UserRole role) {
+    protected User(String name, UserRole role, String profileImage) {
         this.name = name;
-        this.imageUrl = imageUrl;
-        this.nickname = nickname;
-        this.email = email;
-        this.password = password;
-        this.role = UserRole.MEMBER;    /// 기본은 다 유저
-        this.deleted = false;
+        this.role = role != null ? role : UserRole.User;
+        this.profileImage = profileImage;
+        this.isDelete = IsDelete.N;
     }
 
-    /// 정적 팩토리 메서드
-    public static User of(String name, String imageUrl, String nickname, String email, String password) {
+    public static User of(String name, String profileImage) {
         return User.builder()
                 .name(name)
-                .imageUrl(imageUrl)
-                .nickname(nickname)
-                .email(email)
-                .password(password)
+                .profileImage(profileImage)
                 .build();
     }
 
-    /// 비즈니스 로직
-    /// 삭제
     public void delete() {
-        this.deleted = true;
+        this.isDelete = IsDelete.Y;
     }
 
-    /// 업데이트
-    public void update(String imageUrl, String nickname) {
-
-        if (imageUrl != null) {
-            /// 프로필이미지를 수정할 내용이 존재한다면,
-            this.imageUrl = imageUrl;
+    public void update(String name, String profileImage) {
+        if (name != null) {
+            this.name = name;
         }
-
-        if (nickname != null) {
-            /// 닉네임을 수정할 내용이 존재한다면,
-            this.nickname = nickname;
+        if (profileImage != null) {
+            this.profileImage = profileImage;
         }
     }
 
-    /// 비밀번호 업데이트
-    public void updatePassword(String passwordHash) {
-        this.password = passwordHash;
+    public boolean isDeleted() {
+        return this.isDelete.isDeleted();
     }
-
 }
