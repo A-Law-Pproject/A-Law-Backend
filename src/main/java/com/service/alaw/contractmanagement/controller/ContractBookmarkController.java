@@ -1,49 +1,40 @@
 package com.service.alaw.contractmanagement.controller;
 
-import com.service.alaw.common.exception.BadRequestException;
-import com.service.alaw.common.exception.UnauthorizedException;
-import com.service.alaw.common.exception.code.CommonErrorCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.service.alaw.common.response.ApiResponse;
-import com.service.alaw.contractmanagement.dto.ContractResponse;
 import com.service.alaw.contractmanagement.service.ContractCommandService;
-import org.springframework.web.bind.annotation.*;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/contracts")
+@RequestMapping("/api/contracts")
+@RequiredArgsConstructor
 public class ContractBookmarkController {
 
-    private final ContractCommandService commandService;
+    private final ContractCommandService contractCommandService;
 
-    public ContractBookmarkController(ContractCommandService commandService) {
-        this.commandService = commandService;
-    }
-
+    // PATCH /api/contracts/{id}/bookmark - 중요 계약서로 등록 (즐겨찾기)
     @PatchMapping("/{id}/bookmark")
-    public ApiResponse<ContractResponse> bookmarkOn(
-            @RequestHeader(value = "X-USER-ID", required = false) String userIdHeader,
-            @PathVariable Long id
-    ) {
-        Long userId = parseUserId(userIdHeader);
-        return ApiResponse.updated(commandService.bookmark(userId, id, true));
+    public ResponseEntity<ApiResponse<Void>> bookmarkContract(
+            @PathVariable("id") Long contractId,
+            @AuthenticationPrincipal Long userId) {
+        contractCommandService.bookmarkContract(contractId, userId);
+        return ApiResponse.updated();
     }
 
+    // DELETE /api/contracts/{id}/bookmark - 중요 계약서 해제 (즐겨찾기 해제)
     @DeleteMapping("/{id}/bookmark")
-    public ApiResponse<ContractResponse> bookmarkOff(
-            @RequestHeader(value = "X-USER-ID", required = false) String userIdHeader,
-            @PathVariable Long id
-    ) {
-        Long userId = parseUserId(userIdHeader);
-        return ApiResponse.updated(commandService.bookmark(userId, id, false));
-    }
-
-    private Long parseUserId(String header) {
-        if (header == null) {
-            throw new UnauthorizedException(CommonErrorCode.UNAUTHORIZED);
-        }
-        try {
-            return Long.parseLong(header);
-        } catch (NumberFormatException e) {
-            throw new BadRequestException(CommonErrorCode.BAD_REQUEST);
-        }
+    public ResponseEntity<ApiResponse<Void>> unbookmarkContract(
+            @PathVariable("id") Long contractId,
+            @AuthenticationPrincipal Long userId) {
+        contractCommandService.unbookmarkContract(contractId, userId);
+        return ApiResponse.deleted();
     }
 }
