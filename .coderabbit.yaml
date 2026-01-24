@@ -8,7 +8,7 @@ reviews:
   auto_review:
     enabled: true
     base_branches:
-      - "*"
+      - ".*"
 
   # 전역 리뷰 지침: 코드 전반에 적용되는 규칙
   instructions: |
