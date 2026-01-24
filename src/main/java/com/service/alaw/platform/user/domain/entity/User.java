@@ -1,7 +1,6 @@
 package com.service.alaw.platform.user.domain.entity;
 
 import com.service.alaw.platform.BaseTimeEntity;
-import com.service.alaw.platform.user.domain.entity.IsDelete;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -26,7 +25,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
-    @Column(name = "profile_image", length = 255)
+    @Column(name = "profile_image")
     private String profileImage;
 
     @Enumerated(EnumType.STRING)
