@@ -29,5 +29,7 @@ jobs:
             gradle-${{ runner.os }}
 
       - name: 빌드여부 체크하기
-        run: ./gradlew clean -x test build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
 
