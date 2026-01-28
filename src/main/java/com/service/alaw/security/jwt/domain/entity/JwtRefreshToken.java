@@ -1,8 +1,8 @@
 package com.service.alaw.security.jwt.domain.entity;
 
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.index.Indexed;
@@ -37,7 +37,7 @@ public class JwtRefreshToken {
     }
 
     /// 정적 팩토리 메소드
-    public static JwtRefreshToken of(Long userId, String refreshToken, Long expireTime) {
+    public static JwtRefreshToken of(Long userId, String refreshToken, long expireTime) {
         return JwtRefreshToken.builder()
                 .userId(userId)
                 .refreshToken(refreshToken)

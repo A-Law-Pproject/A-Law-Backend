@@ -34,7 +34,7 @@ public class HttpUtil {
     @Value("${auth.cookie.sameSiteOption}")
     private String sameSiteOption;
 
-    @Value("${auth.cookie.PathOption}")
+    @Value("${auth.cookie.pathOption}")
     private String cookiePathOption;
 
 

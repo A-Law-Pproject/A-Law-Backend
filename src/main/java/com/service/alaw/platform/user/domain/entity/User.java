@@ -25,6 +25,13 @@ public class User extends BaseTimeEntity {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Provider provider;
+
+    @Column(nullable = false)
+    private String providerId;
+
     @Column(name = "profile_image")
     private String profileImage;
 
@@ -32,17 +39,22 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_delete", nullable = false)
     private IsDelete isDelete;
 
+
     @Builder
-    protected User(String name, UserRole role, String profileImage) {
+    protected User(String name, UserRole role, Provider provider, String providerId, String profileImage) {
         this.name = name;
         this.role = role != null ? role : UserRole.User;
+        this.provider = provider;
+        this.providerId = providerId;
         this.profileImage = profileImage;
         this.isDelete = IsDelete.N;
     }
 
-    public static User of(String name, String profileImage) {
+    public static User of(String name, Provider provider, String providerId, String profileImage) {
         return User.builder()
                 .name(name)
+                .provider(provider)
+                .providerId(providerId)
                 .profileImage(profileImage)
                 .build();
     }

@@ -5,7 +5,6 @@ import com.service.alaw.security.jwt.application.dto.JwtTokenRequest;
 import com.service.alaw.security.jwt.domain.entity.JwtRefreshToken;
 import com.service.alaw.security.jwt.domain.repository.JwtRefreshTokenRepository;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -94,11 +93,10 @@ public class JwtProvider {
         claims.put(ROLE_CLAIM, tokenInfo.role());
 
         return Jwts.builder()
-                .setIssuer("alaw") // 작성자
                 .setClaims(claims)  // 페이로드
                 .setIssuedAt(Date.from(now)) // 발급 시간
                 .setExpiration(expiredAt) // 만료 시간
-                .signWith(secretKey, SignatureAlgorithm.HS256)  // 비밀키 서명
+                .signWith(secretKey, Jwts.SIG.HS256)  // 비밀키 서명
                 .compact();
     }
 }

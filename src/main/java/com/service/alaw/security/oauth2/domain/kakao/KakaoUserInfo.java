@@ -37,7 +37,7 @@ public class KakaoUserInfo implements OAuth2UserInfo {
     public String getProviderId() {
         return  Optional.ofNullable(attributes.get("id"))
                 .map(Object::toString)
-                .orElse("Unknown");
+                .orElseThrow(() -> new IllegalStateException("Kakao user id is required"));
     }
 
     @Override

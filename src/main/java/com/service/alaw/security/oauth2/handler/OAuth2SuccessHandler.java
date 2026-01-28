@@ -57,7 +57,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             /// 쿠키와 함께 리다이렉트 (프론트 홈 주소)
             getRedirectStrategy().sendRedirect(httpServletRequest, httpServletResponse, REDIRECT_PATH);
         } catch (Exception e) {
-            log.error("OAuth2 회원가입 진행중 에러 발생", e);
+            log.error("OAuth2 로그인 처리 중 에러 발생", e);
+            httpServletResponse.sendRedirect(REDIRECT_PATH + "/login?error=auth_failed");
         }
     }
 }

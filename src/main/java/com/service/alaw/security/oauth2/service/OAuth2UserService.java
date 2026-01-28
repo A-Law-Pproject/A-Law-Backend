@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,14 +41,14 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         /// 유저 정보(attributes) 가져오기
         Map<String, Object> oAuth2UserAttributes = super.loadUser(userRequest).getAttributes();
 
-        /// resistrationId 가져오기
+        /// registrationId 가져오기
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
         /// OAuth2를 바탕으로 정보 생성
         OAuth2UserInfo userInfo = createOAuth2User(registrationId, oAuth2UserAttributes);
 
         // 이메일로 기존 유저 조회 (소셜 로그인 연동 로직 필요시 수정)
-        Optional<User> existUser = userRepository.findByName(userInfo.getUserName());
+        Optional<User> existUser = userRepository.findByProviderId(userInfo.getProviderId());
 
         /// 존재한다면 로그인
         if (existUser.isPresent()) {
@@ -76,8 +77,9 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 userInfo = new KakaoUserInfo(oAuth2UserAttributes);
                 break;
             default:
-                throw new BaseException(SecurityErrorCode.BAD_REQUEST_OAUTH2);
-        }
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("invalid_request", SecurityErrorCode.BAD_REQUEST_OAUTH2.getMessage(), null),
+                        SecurityErrorCode.BAD_REQUEST_OAUTH2.getMessage());}
 
         return userInfo;
     }

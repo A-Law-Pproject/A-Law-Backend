@@ -69,6 +69,8 @@ public class AuthApi implements AuthApiSpec {
 
         /// 토큰 재발급하기 (액세스/리프레쉬)
         httpUtil.addAccessTokenCookie(httpServletResponse, response.accessToken());
+        httpUtil.addRefreshTokenCookie(httpServletResponse, response.refreshToken());
+
 
         /// 리턴
         return ApiResponse.updated();

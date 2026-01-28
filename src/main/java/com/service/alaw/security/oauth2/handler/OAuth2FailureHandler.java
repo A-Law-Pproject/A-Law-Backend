@@ -45,13 +45,14 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
 
             /// 레디스에 값 추가( 유효시간 5분 )
             redisTemplate.opsForValue().set(tempUserKey, userInfo, Duration.ofMinutes(5));
+            redisTemplate.opsForValue().set(tempUserKey, userInfo, Duration.ofMinutes(5));
 
             String extraInfoUrl = REDIRECT_PATH + "/signup?state=" + tempUserKey;
 
             /// 응답을 리다이렉트
             response.sendRedirect(extraInfoUrl);
         } else {
-            response.sendRedirect("/login?error");
+            response.sendRedirect(REDIRECT_PATH + "/login?error");
         }
     }
 }
