@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@Table(name = "contract")
+@Table(name = "contracts")
 public class Contract extends BaseTimeEntity {
 
     @Id
@@ -20,8 +20,8 @@ public class Contract extends BaseTimeEntity {
     private Long contractId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "User_id", nullable = false)
-    private User User;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "analysis_id", length = 255)
     private String analysisId;
@@ -47,8 +47,8 @@ public class Contract extends BaseTimeEntity {
     private String rawText;
 
     @Builder
-    protected Contract(User User, String title, String fileUrl, ContractType contractType) {
-        this.User = User;
+    protected Contract(User user, String title, String fileUrl, ContractType contractType) {
+        this.user = user;
         this.title = title;
         this.fileUrl = fileUrl;
         this.contractType = contractType;
@@ -56,9 +56,9 @@ public class Contract extends BaseTimeEntity {
         this.status = ContractStatus.PENDING;
     }
 
-    public static Contract of(User User, String title, String fileUrl, ContractType contractType) {
+    public static Contract of(User user, String title, String fileUrl, ContractType contractType) {
         return Contract.builder()
-                .User(User)
+                .user(user)
                 .title(title)
                 .fileUrl(fileUrl)
                 .contractType(contractType)

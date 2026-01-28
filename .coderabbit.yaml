@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR" # 모든 리뷰와 요약을 한국어로 진행
+early_access: false
+
+reviews:
+  profile: "chill" # 친근하고 부드러운 말투로 리뷰
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    base_branches:
+      - ".*"
+
+  # 전역 리뷰 지침: 코드 전반에 적용되는 규칙
+    path_instructions:
+     - path: "**/*"
+       instructions: |
+        1. '어떻게' 개선하면 좋을지 구체적인 대안과 예시 코드를 포함해 교육적인 관점에서 리뷰해주세요.
+        2. 중복되거나 과도하게 복잡한 예외 처리(try-catch 남발)가 있는지 확인하고, 가능한 경우 GlobalExceptionHandler를 활용한 정돈된 처리를 권장해주세요.
+        3. 커밋 단위가 논리적으로 잘 나누어져 있는지, 불필요한 로그 출력이나 테스트 코드가 포함되지는 않았는지 검토해주세요.
+
+  # 경로별 맞춤 지침: 특정 기술 스택에 최적화된 리뷰
+  path_instructions:
+    - path: "**/dto/**/*.java"
+      instructions: "DTO 클래스에서 JSON 직렬화/역직렬화에 필요한 Getter가 누락되어 Swagger나 API 응답에서 문제가 발생하지 않는지 반드시 확인해주세요."
+
+    - path: "**/controller/**"
+      instructions: "컨트롤러에는 비즈니스 로직이 포함되지 않아야 합니다. API 응답 규격이 일관적인지, 불필요한 의존성이 없는지 체크해주세요."
+
+chat:
+  auto_reply: true # 코드래빗의 리뷰에 댓글을 달면 AI가 즉시 답변
