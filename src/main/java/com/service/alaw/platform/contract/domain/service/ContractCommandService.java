@@ -41,7 +41,7 @@ public class ContractCommandService {
     public ContractResponse updateContract(Long contractId, Long userId, ContractUpdateRequest request) {
         Contract contract = findContractByIdAndUserId(contractId, userId);
 
-        contract.update(request.getTitle());
+        contract.updateTitle(request.getTitle());
 
         return ContractResponse.from(contract);
     }
