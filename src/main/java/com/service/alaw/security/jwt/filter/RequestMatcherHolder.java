@@ -46,6 +46,13 @@ public class RequestMatcherHolder {
             new RequestInfo(POST, "/v1/likes/**", UserRole.User),
             new RequestInfo(DELETE, "/v1/likes/**", UserRole.User),
 
+            // contracts
+            new RequestInfo(GET, "/api/v1/contracts/**", UserRole.User),
+            new RequestInfo(POST, "/api/v1/contracts/**", UserRole.User),
+            new RequestInfo(PUT, "/api/v1/contracts/**", UserRole.User),
+            new RequestInfo(DELETE, "/api/v1/contracts/**", UserRole.User),
+            new RequestInfo(PATCH, "/api/v1/contracts/**", UserRole.User),
+
             // infra
             new RequestInfo(GET, "/v1/complexes/infra/**", null),
 

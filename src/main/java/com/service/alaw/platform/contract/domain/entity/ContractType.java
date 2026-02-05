@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ContractType {
     LEASE("임대차계약서"),
+    SALE("매매계약서"),
+    JEONSE("전세계약서"),
+    MONTHLY_RENT("월세계약서"),
+    COMMERCIAL_LEASE("상가임대차계약서"),
     OTHER("기타");
 
     private final String label;
@@ -21,7 +25,7 @@ public enum ContractType {
     @JsonCreator
     public static ContractType fromLabel(String label) {
         for (ContractType type : values()) {
-            if (type.label.equals(label)) {
+            if (type.label.equals(label) || type.name().equals(label)) {
                 return type;
             }
         }

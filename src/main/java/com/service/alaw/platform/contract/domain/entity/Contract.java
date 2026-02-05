@@ -33,7 +33,7 @@ public class Contract extends BaseTimeEntity {
     private String fileUrl;
 
     @Column(name = "bookmark", nullable = false)
-    private Boolean bookmark;
+    private boolean bookmark;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "contract_type")
@@ -65,25 +65,34 @@ public class Contract extends BaseTimeEntity {
                 .build();
     }
 
-    public void updateAnalysisId(String analysisId) {
-        this.analysisId = analysisId;
+    // 비즈니스 로직
+    public void updateTitle(String title) {
+        if (title != null) {
+            this.title = title;
+        }
     }
 
-    public void updateStatus(ContractStatus status) {
-        this.status = status;
+    public void bookmark() {
+        this.bookmark = true;
     }
 
-    public void updateRawText(String rawText) {
-        this.rawText = rawText;
+    public void unbookmark() {
+        this.bookmark = false;
     }
 
     public void toggleBookmark() {
         this.bookmark = !this.bookmark;
     }
 
-    public void updateTitle(String title) {
-        if (title != null) {
-            this.title = title;
-        }
+    public void updateStatus(ContractStatus status) {
+        this.status = status;
+    }
+
+    public void updateAnalysisId(String analysisId) {
+        this.analysisId = analysisId;
+    }
+
+    public void updateRawText(String rawText) {
+        this.rawText = rawText;
     }
 }
