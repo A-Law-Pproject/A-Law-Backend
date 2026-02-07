@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -31,11 +34,19 @@ public class ExplanationDocument {
     @Field("explanation")
     private String explanation;
 
+    @CreatedDate
+    @Field("created_at")
+    private LocalDateTime createdAt;
+
     public static ExplanationDocument of(Long contractId, String originalText, String explanation) {
         return ExplanationDocument.builder()
                 .contractId(contractId)
                 .originalText(originalText)
                 .explanation(explanation)
                 .build();
+    }
+
+    public void updateExplanation(String explanation) {
+        this.explanation = explanation;
     }
 }
