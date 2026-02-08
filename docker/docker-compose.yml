@@ -1,25 +1,25 @@
 services:
-#  fastapi:
-#    build: ./fastapi
-#    ports:
-#      - "8000:8000"
-#    environment:
-#      - MODEL_PATH=/models
-#      - CUDA_VISIBLE_DEVICES=0
-#    volumes:
-#      - ./models:/models
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#            - driver: nvidia
-#              count: 1
-#              capabilities: [ gpu ]
-
+  spring:
+    image: ${DOCKER_USERNAME}/alaw-be:latest
+    container_name: alaw-spring
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env
+    depends_on:
+      - postgresql
+      - mongo
+      - redis
+      - rabbitmq
+    networks:
+      - alaw-network
 
   postgresql:
     image: postgres:15
     container_name: alaw-postgres
+    networks:
+      - alaw-network  # 추가됨
     volumes:
       - ./postgres/conf:/etc/postgresql/conf.d   # 필요 시 설정 파일 마운트
       - ./postgres/data:/var/lib/postgresql/data
@@ -35,6 +35,8 @@ services:
   mongo:
       image: mongo:6.0
       container_name: alaw-mongo
+      networks:
+        - alaw-network  # 추가됨
       ports:
       - '27017:27017'
       volumes:
@@ -47,29 +49,34 @@ services:
   redis:
     image: redis:7.2.5
     container_name: alaw-redis
+    networks:
+      - alaw-network  # 추가됨
     ports:
       - '6379:6379'
-#  rabbitmq:
-#    image: rabbitmq:3.11-management
-#    container_name: alaw-rabbitmq
-#    restart: unless-stopped
-#    ports:
-#      - "5672:5672"    # AMQP
-#      - "15672:15672"  # Management UI
-#    environment:
-#      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
-#      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-#    volumes:
-#      - ./rabbitmq/data:/var/lib/rabbitmq
-#      - ./rabbitmq/log:/var/log/rabbitmq
-#      - ./rabbitmq/conf:/etc/rabbitmq  # 필요 시 설정 파일 마운트
-#    healthcheck:
-#      test: ["CMD", "rabbitmqctl", "status"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: alaw-rabbitmq
+    networks:
+      - alaw-network  # 추가됨
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+      - ./rabbitmq/log:/var/log/rabbitmq
+      - ./rabbitmq/conf:/etc/rabbitmq  # 필요 시 설정 파일 마운트
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
 networks:
-  backend:
-    driver: bridge
+  alaw-network:
+    external: true

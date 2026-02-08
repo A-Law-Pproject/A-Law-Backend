@@ -23,7 +23,7 @@ public class SwaggerConfig {
                 .info(apiInfo())
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("Local Server"),
-                        new Server().url("https://api.alaw.site").description("Production Server")
+                        new Server().url("https://api.a-law.site").description("Production Server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
@@ -44,7 +44,7 @@ public class SwaggerConfig {
                 .version("v1.0.0")
                 .contact(new Contact()
                         .name("A-Law Team")
-                        .email("support@alaw.site")
+                        .email("support@a-law.site")
                 );
     }
 }

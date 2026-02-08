@@ -2,13 +2,12 @@ name: A-LAW CI 파이프라인
 
 on:
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main", "develop","qa/release-v0.0.1"]
 
 jobs:
 
   build:
     runs-on: ubuntu-22.04
-    if: success()
     steps:
       - uses: actions/checkout@v4
 
@@ -19,7 +18,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle 캐싱
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -28,8 +27,12 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}
 
-      - name: 빌드여부 체크하기
+      - name: application.yml 생성
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+
+      - name: 빌드 체크
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
-
