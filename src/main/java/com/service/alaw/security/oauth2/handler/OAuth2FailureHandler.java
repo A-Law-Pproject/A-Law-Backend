@@ -25,7 +25,7 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
     private final RedisTemplate<String, Object> redisTemplate;
     private final KeyUtil keyUtil;
 
-    @Value("${spring.front.host}")
+    @Value("${cors.front.local}")
     public String REDIRECT_PATH;
 
     /**

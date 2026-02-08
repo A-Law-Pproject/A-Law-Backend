@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiResponse<Void>> build(BaseCode errorCode, HttpStatus status,
                                                        Exception ex) {
         logException(status, errorCode.getCode(), errorCode.getMessage(), ex);
-        ApiResponse<Void> body = ApiResponse.error(errorCode);
+        ApiResponse<Void> body = ApiResponse.error(errorCode, null);
         return ResponseEntity.status(status).body(body);
     }
 

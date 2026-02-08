@@ -1,9 +1,7 @@
-package com.service.alaw.platform.contract.domain.service;
+package com.service.alaw.platform.contract.application.service;
 
-import com.service.alaw.common.exception.NotFoundException;
-import com.service.alaw.common.exception.code.CommonErrorCode;
-import com.service.alaw.platform.contract.application.dto.ContractListResponse;
-import com.service.alaw.platform.contract.application.dto.ContractResponse;
+import com.service.alaw.platform.contract.application.dto.crud.ContractListResponse;
+import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,21 +16,21 @@ import java.util.stream.Collectors;
 public class ContractQueryService {
 
     private final ContractRepository contractRepository;
+    private final ContractValidator contractValidator;
 
-    // 내 계약서 목록 조회
     public List<ContractListResponse> getMyContracts(Long userId) {
         List<Contract> contracts = contractRepository.findByUser_UserIdOrderByCreatedDateDesc(userId);
-
-        return contracts.stream()
-                .map(ContractListResponse::from)
-                .collect(Collectors.toList());
+        return convertToListResponses(contracts);
     }
 
-    // 계약서 상세 조회
     public ContractResponse getContract(Long contractId, Long userId) {
-        Contract contract = contractRepository.findByContractIdAndUser_UserId(contractId, userId)
-                .orElseThrow(() -> new NotFoundException(CommonErrorCode.NOT_FOUND));
-
+        Contract contract = contractValidator.validateContractOwnership(contractId, userId);
         return ContractResponse.from(contract);
+    }
+
+    private List<ContractListResponse> convertToListResponses(List<Contract> contracts) {
+        return contracts.stream()
+                .map(ContractListResponse::from)
+                .toList();
     }
 }

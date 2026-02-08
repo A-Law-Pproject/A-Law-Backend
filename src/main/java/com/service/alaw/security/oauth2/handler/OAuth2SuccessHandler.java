@@ -26,7 +26,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtProvider jwtProvider;
     private final HttpUtil httpUtil;
 
-    @Value("${spring.front.host}")
+    @Value("${cors.front.local}")
     private String REDIRECT_PATH;
 
     /*

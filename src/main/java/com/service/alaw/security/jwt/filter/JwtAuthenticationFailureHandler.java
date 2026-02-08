@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -37,13 +38,13 @@ public class JwtAuthenticationFailureHandler implements AuthenticationEntryPoint
                          AuthenticationException authException) throws IOException {
 
         /// 기본 에러 코드
-        ApiResponse<Object> apiResponse;
+        ResponseEntity<ApiResponse<Object>> apiResponse;
 
         /// JWT 예외인 경우
         if (authException instanceof JwtAuthenticationException jwtEx) {
-            apiResponse = ApiResponse.error(jwtEx.getErrorCode());
+            apiResponse = ApiResponse.error(HttpStatus.UNAUTHORIZED,jwtEx.getErrorCode());
         } else {
-            apiResponse = ApiResponse.error(CommonErrorCode.UNAUTHORIZED);
+            apiResponse = ApiResponse.error(HttpStatus.UNAUTHORIZED,CommonErrorCode.UNAUTHORIZED);
         }
 
         /// 응답 설정

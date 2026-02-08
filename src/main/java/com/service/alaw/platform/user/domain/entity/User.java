@@ -26,7 +26,7 @@ public class User extends BaseTimeEntity {
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Provider provider;
 
     @Column(nullable = false)

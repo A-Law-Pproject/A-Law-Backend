@@ -26,7 +26,6 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtValidator jwtValidator;
-    private final JwtAuthenticationFailureHandler failureHandler;
     private final HttpUtil httpUtil;
 
     /// 필터 작동
@@ -39,26 +38,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        try {
-            /// 토큰 추출
-            Optional<String> accessTokenOptional = httpUtil.getAccessToken(request);
+        /// 토큰 추출
+        Optional<String> accessTokenOptional = httpUtil.getAccessToken(request);
 
-            /// 토큰이 존재할 때만 인증 처리
-            if (accessTokenOptional.isPresent()) {
+        /// 토큰이 존재할 때만 인증 처리
+        if (accessTokenOptional.isPresent()) {
+            try {
                 String accessToken = accessTokenOptional.get();
-
-                /// 토큰 검증 후, Authentication 객체 반환
                 Authentication authentication = jwtValidator.validateAccessToken(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (JwtAuthenticationException ex) {
+                log.debug("JWT 인증 실패 - URI: {}, 사유: {}", request.getRequestURI(), ex.getMessage());
+                SecurityContextHolder.clearContext();
             }
-
-            /// 토큰이 없거나, 인증에 성공했으면 다음 필터로 진행
-            filterChain.doFilter(request, response);
-
-        } catch (JwtAuthenticationException ex) {
-
-            /// 인증 실패 시 핸들러 호출 후 필터 체인 중단
-            failureHandler.commence(request, response, ex);
         }
+
+        /// 인증 성공/실패 관계없이 다음 필터로 진행
+        /// permitAll() 엔드포인트는 인증 없이도 접근 가능하도록 Spring Security에 위임
+        filterChain.doFilter(request, response);
     }
 }
