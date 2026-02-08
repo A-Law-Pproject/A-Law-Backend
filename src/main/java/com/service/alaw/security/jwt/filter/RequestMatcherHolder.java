@@ -54,7 +54,7 @@ public class RequestMatcherHolder {
             new RequestInfo(PATCH, "/api/v1/contracts/**", UserRole.User),
 
             // infra
-            new RequestInfo(GET, "/v1/complexes/infra/**", null),
+            new RequestInfo(GET, "/v1/infra/**", null),
 
 
             // static resources

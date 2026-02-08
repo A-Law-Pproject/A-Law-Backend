@@ -74,12 +74,14 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(BaseCode errorCode) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
-                .build();
+    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status, BaseCode errorCode) {
+        return ResponseEntity.status(status).body(
+                ApiResponse.<T>builder()
+                        .success(false)
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build()
+        );
     }
 
     public static <T> ApiResponse<T> error(BaseCode errorCode, String overrideMessage) {
