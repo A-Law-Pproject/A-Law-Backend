@@ -3,6 +3,7 @@ package com.service.alaw.infra.ocr;
 import com.service.alaw.common.exception.FastApiException;
 import com.service.alaw.platform.contract.application.dto.ocr.FastApiOcrResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -18,11 +19,8 @@ public class OCRClient {
 
     private final WebClient webClient;
 
-    public OCRClient(WebClient.Builder builder) {
-        this.webClient = builder
-                .baseUrl("http://localhost:8001")
-//                .baseUrl("http://fastapi-service:8001")
-                .build();
+    public OCRClient(@Qualifier("fastApiWebClient") WebClient webClient) {
+        this.webClient = webClient;
     }
 
     /**
@@ -34,7 +32,7 @@ public class OCRClient {
 
         try {
             FastApiOcrResponse response = webClient.post()
-                    .uri("/contracts/ocr")
+                    .uri("/api/contracts/ocr")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of("s3_key", s3Key))
                     .retrieve()
@@ -48,9 +46,10 @@ public class OCRClient {
                     .bodyToMono(FastApiOcrResponse.class)
                     .block(Duration.ofSeconds(30));
 
-            log.info("FastAPI OCR 응답 - 텍스트 블록 수: {}, 이미지 크기: {}x{}",
-                    response.textBlocks() != null ? response.textBlocks().size() : 0,
-                    response.imageWidth(), response.imageHeight());
+            log.info("FastAPI OCR 응답 - 블록 수: {}, 이미지 크기: {}x{}, 처리시간: {}s",
+                    response.blocks() != null ? response.blocks().size() : 0,
+                    response.imageWidth(), response.imageHeight(),
+                    response.processingTime());
 
             return response;
 

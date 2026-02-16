@@ -1,0 +1,122 @@
+name: A-LAW CI 파이프라인
+
+on:
+  push:
+    branches: ["main", "develop", "qa/release-v0.0.1"]
+  pull_request:
+    branches: ["main", "develop", "qa/release-v0.0.1"]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: application.yml 생성
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run tests
+        run: ./gradlew clean test
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Gradle Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-22.04
+    # PR에서는 이미지를 푸시하지 않음
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: application.yml 생성
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Docker 메타데이터 추출
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/alaw-be
+          tags: |
+            type=sha,prefix=,format=long
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Docker 이미지 빌드 & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 빌드 결과 요약
+        run: |
+          echo "### 🚀 Docker 이미지 빌드 완료" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**이미지 태그:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  deploy-trigger:
+    needs: build-and-push
+    runs-on: ubuntu-22.04
+    # main 브랜치에만 배포 트리거
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Infra 레포에 배포 트리거
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          repository: ${{ github.repository_owner }}/A-Law-Cloud
+          event-type: deploy-backend
+          client-payload: |
+            {
+              "image_tag": "${{ github.sha }}",
+              "service": "spring",
+              "branch": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}",
+              "commit_message": "${{ github.event.head_commit.message }}"
+            }
+
+      - name: 배포 트리거 완료
+        run: |
+          echo "### 📦 배포 트리거 완료" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**이미지 태그:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**브랜치:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
