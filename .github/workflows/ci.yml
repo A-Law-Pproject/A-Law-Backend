@@ -29,12 +29,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run tests
-          # DB 연결 없이 테스트 환경을 구성하는 옵션을 주입.
-        run: |
-          ./gradlew clean test \
-          -Dspring.datasource.url=jdbc:h2:mem:testdb \
-          -Dspring.datasource.driver-class-name=org.h2.Driver \
-          -Dspring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+        run: ./gradlew clean test
 
 #      - name: Test Report
 #        uses: dorny/test-reporter@v1
