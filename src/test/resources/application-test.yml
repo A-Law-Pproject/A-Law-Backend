@@ -5,8 +5,9 @@ server:
   port: 8080
 
 spring:
-  profiles:
-    active: test
+  config:
+    activate:
+      on-profile: test
 
   # --- DB (H2 In-Memory) ---
   datasource:

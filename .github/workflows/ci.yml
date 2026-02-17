@@ -54,7 +54,7 @@ jobs:
       # [중요] Docker가 COPY . . 를 할 때 application.yml이 포함되어야 합니다.
       - name: application.yml 생성 (빌드 포함용)
         env:
-          SPRING_PROFILES_ACTIVE: local
+          SPRING_PROFILES_ACTIVE: prod
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
