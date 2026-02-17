@@ -7,19 +7,20 @@ on:
     branches: ["main", "develop", "qa/release-v0.0.1"]
 
 jobs:
+  # 1. 테스트 단계 (코드 품질 검증)
   test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: application.yml 생성
+      - name: application.yml 생성 (테스트용)
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
@@ -38,16 +39,17 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
 
+  # 2. 빌드 및 푸시 단계 (Docker 내부 빌드 활용)
   build-and-push:
     needs: test
     runs-on: ubuntu-22.04
-    # PR에서는 이미지를 푸시하지 않음
     if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: application.yml 생성
+      # [중요] Docker가 COPY . . 를 할 때 application.yml이 포함되어야 합니다.
+      - name: application.yml 생성 (빌드 포함용)
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
@@ -76,26 +78,17 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # GHA 전용 캐시를 사용하여 빌드 속도 최적화
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 빌드 결과 요약
-        run: |
-          echo "### 🚀 Docker 이미지 빌드 완료" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**이미지 태그:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
+  # 3. 인프라 레포 배포 트리거
   deploy-trigger:
     needs: build-and-push
     runs-on: ubuntu-22.04
-    # main 브랜치에만 배포 트리거
     if: github.event_name == 'push'
 
     steps:
@@ -110,13 +103,5 @@ jobs:
               "image_tag": "${{ github.sha }}",
               "service": "spring",
               "branch": "${{ github.ref_name }}",
-              "actor": "${{ github.actor }}",
-              "commit_message": "${{ github.event.head_commit.message }}"
+              "actor": "${{ github.actor }}"
             }
-
-      - name: 배포 트리거 완료
-        run: |
-          echo "### 📦 배포 트리거 완료" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**이미지 태그:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**브랜치:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
