@@ -1,0 +1,141 @@
+# ============================================================
+# 테스트 환경 설정
+# ============================================================
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: test
+
+  # --- DB (H2 In-Memory) ---
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  # --- MongoDB (비활성화) ---
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+      auto-index-creation: false
+    redis:
+      host: localhost
+      port: 6379
+
+  # --- Redis Session 비활성화 ---
+  session:
+    store-type: none
+
+  # --- RabbitMQ (비활성화) ---
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  # --- OAuth2 (테스트용 더미) ---
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-name: Kakao
+            client-id: test-client-id
+            client-secret: test-client-secret
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+  # --- Multipart ---
+  servlet:
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
+      enabled: true
+
+  # --- Auto-config 제외 ---
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+# --- AWS S3 ---
+spring.cloud.aws:
+  credentials:
+    access-key: test
+    secret-key: test
+  region:
+    static: ap-northeast-2
+  s3:
+    bucket: test-bucket
+  stack:
+    auto: false
+
+# --- FastAPI ---
+fastapi:
+  base-url: http://localhost:8001
+  timeout:
+    connect: 5000
+    read: 30000
+
+# --- JWT / Auth ---
+auth:
+  jwt:
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci1jaS10ZXN0LW9ubHktMTIzNDU2Nzg5MA==
+    access:
+      expiration: 3600
+      dev_expiration: 3600
+    refresh:
+      expiration: 7200
+  cookie:
+    secureOption: false
+    sameSiteOption: Lax
+    pathOption: /
+
+# --- CORS ---
+cors:
+  front:
+    local: http://localhost:3000
+    dev: http://localhost:8080
+    prod: https://www.a-law.site
+  back:
+    dev: http://localhost:8080
+
+# --- RabbitMQ App ---
+app:
+  rabbitmq:
+    exchange: contract-analysis-ex
+    queue: contract-analysis-queue
+    routing-key: contract.analyze
+
+# --- Logging ---
+logging:
+  level:
+    root: WARN
+    com.service.alaw: DEBUG
+
+# --- Actuator ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
