@@ -105,4 +105,8 @@ public class Contract extends BaseTimeEntity {
   public void updateRawText(String rawText) {
     this.rawText = rawText;
   }
+
+  public void updateFileUrl(String fileUrl) {
+    this.fileUrl = fileUrl;
+  }
 }
