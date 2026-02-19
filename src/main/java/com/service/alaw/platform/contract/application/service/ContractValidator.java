@@ -11,10 +11,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ContractValidator {
 
-    private final ContractRepository contractRepository;
+  private final ContractRepository contractRepository;
 
-    public Contract validateContractOwnership(Long contractId, Long userId) {
-        return contractRepository.findByContractIdAndUser_UserId(contractId, userId)
-                .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.CONFLICT));
-    }
+  public Contract validateContractOwnership(Long contractId, Long userId) {
+    return contractRepository
+        .findByContractIdAndUser_UserId(contractId, userId)
+        .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.CONFLICT));
+  }
 }
