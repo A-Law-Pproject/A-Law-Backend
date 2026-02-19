@@ -1,5 +1,6 @@
 package com.service.alaw.platform.contract.domain.document;
 
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,8 +11,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Builder
 @Document(collection = "explanation")
@@ -19,34 +18,33 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ExplanationDocument {
 
-    @Id
-    private String id;
+  @Id private String id;
 
-    @Field("explanation_id")
-    private Long explanationId;
+  @Field("explanation_id")
+  private Long explanationId;
 
-    @Field("contract_id")
-    private Long contractId;
+  @Field("contract_id")
+  private Long contractId;
 
-    @Field("original_text")
-    private String originalText;
+  @Field("original_text")
+  private String originalText;
 
-    @Field("explanation")
-    private String explanation;
+  @Field("explanation")
+  private String explanation;
 
-    @CreatedDate
-    @Field("created_at")
-    private LocalDateTime createdAt;
+  @CreatedDate
+  @Field("created_at")
+  private LocalDateTime createdAt;
 
-    public static ExplanationDocument of(Long contractId, String originalText, String explanation) {
-        return ExplanationDocument.builder()
-                .contractId(contractId)
-                .originalText(originalText)
-                .explanation(explanation)
-                .build();
-    }
+  public static ExplanationDocument of(Long contractId, String originalText, String explanation) {
+    return ExplanationDocument.builder()
+        .contractId(contractId)
+        .originalText(originalText)
+        .explanation(explanation)
+        .build();
+  }
 
-    public void updateExplanation(String explanation) {
-        this.explanation = explanation;
-    }
+  public void updateExplanation(String explanation) {
+    this.explanation = explanation;
+  }
 }
