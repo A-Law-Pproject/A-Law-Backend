@@ -118,6 +118,7 @@ public class HttpUtil {
                 .httpOnly(true)
                 .secure(secureOption)  // Dev/Prod 환경에 따라 설정됨
                 .sameSite(sameSiteOption)
+                .domain("a-law.site")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
