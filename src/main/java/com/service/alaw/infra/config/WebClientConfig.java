@@ -48,40 +48,21 @@ public class WebClientConfig {
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .filter(logRequest())  // 요청 로깅
-                .filter(logResponse()) // 응답 로깅
-                .filter(errorHandler()) // 에러 핸들링
+                .filter(logRequest())
+                .filter(logResponse())
                 .build();
     }
 
-    // 요청 로깅
     private ExchangeFilterFunction logRequest() {
         return ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
-            System.out.println("FastAPI Request: " + clientRequest.method() + " " + clientRequest.url());
-            clientRequest.headers().forEach((name, values) ->
-                    values.forEach(value -> System.out.println(name + ": " + value)));
+            log.info("FastAPI Request: {} {}", clientRequest.method(), clientRequest.url());
             return Mono.just(clientRequest);
         });
     }
 
-    // 응답 로깅
     private ExchangeFilterFunction logResponse() {
         return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-            System.out.println("FastAPI Response Status: " + clientResponse.statusCode());
-            return Mono.just(clientResponse);
-        });
-    }
-
-    // 에러 핸들링
-    private ExchangeFilterFunction errorHandler() {
-        return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-            if (clientResponse.statusCode().is4xxClientError() ||
-                    clientResponse.statusCode().is5xxServerError()) {
-                return clientResponse.bodyToMono(String.class)
-                        .flatMap(errorBody -> Mono.error(
-                                new FastApiException("FastAPI Error: " + errorBody)
-                        ));
-            }
+            log.info("FastAPI Response Status: {}", clientResponse.statusCode());
             return Mono.just(clientResponse);
         });
     }
