@@ -82,7 +82,7 @@ jobs:
           tags: |
             type=sha,prefix=,format=long
             type=ref,event=branch
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Docker 이미지 빌드 & Push
         uses: docker/build-push-action@v5
@@ -92,27 +92,26 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # GHA 전용 캐시를 사용하여 빌드 속도 최적화
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 3. 인프라 레포 배포 트리거
-  deploy-trigger:
-    needs: build-and-push
-    runs-on: ubuntu-22.04
-    if: github.event_name == 'push'
+    # 3. 인프라 레포 배포 트리거
+    deploy-trigger:
+      needs: build-and-push
+      runs-on: ubuntu-22.04
+      if: github.event_name == 'push'
 
-    steps:
-      - name: Infra 레포에 배포 트리거
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.INFRA_REPO_TOKEN }}
-          repository: ${{ github.repository_owner }}/A-Law-Cloud
-          event-type: deploy-backend
-          client-payload: |
-            {
-              "image_tag": "${{ github.sha }}",
-              "service": "spring",
-              "branch": "${{ github.ref_name }}",
-              "actor": "${{ github.actor }}"
-            }
+      steps:
+        - name: Infra 레포에 배포 트리거
+          uses: peter-evans/repository-dispatch@v3
+          with:
+            token: ${{ secrets.INFRA_REPO_TOKEN }}
+            repository: ${{ github.repository_owner }}/A-Law-Cloud
+            event-type: deploy-backend
+            client-payload: |
+              {
+                "image_tag": "latest",
+                "service": "spring",
+                "branch": "${{ github.ref_name }}",
+                "actor": "${{ github.actor }}"
+              }
