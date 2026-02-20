@@ -55,8 +55,7 @@ public class RequestMatcherHolder {
             new RequestInfo(GET, "/actuator/**", null),
 
             // Swagger UI 및 API 문서
-            new RequestInfo(GET, "/api/v1/api-docs/**", null),
-            new RequestInfo(GET, "/api/v1/swagger-ui/**", null),
+            new RequestInfo(GET, "/v3/api-docs/**", null),
             new RequestInfo(GET, "/swagger-ui/**", null),
             new RequestInfo(GET, "/swagger-resources/**", null),
             new RequestInfo(GET, "/webjars/**", null),
