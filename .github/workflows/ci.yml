@@ -53,17 +53,22 @@ jobs:
 
       # [중요] Docker가 COPY . . 를 할 때 application.yml이 포함되어야 합니다.
       - name: application.yml 생성 (빌드 포함용)
-        env:
-          SPRING_PROFILES_ACTIVE: prod
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
-          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+          cat > src/main/resources/application.yml << 'EOF'
+          ${{ secrets.APPLICATION_YML }}
+          EOF
+
+      - name: application.yml 검증
+        run: |
+          echo "=== prod datasource 확인 ==="
+          grep -A3 "datasource" src/main/resources/application.yml | grep "url"
+          if grep -q "url:$" src/main/resources/application.yml; then
+            echo "❌ ERROR: DB_URL이 비어있습니다!"
+            exit 1
+          fi
+          echo "✅ application.yml 정상 확인"
+          
 
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v3
@@ -94,6 +99,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: true
 
   # 3. 인프라 레포 배포 트리거
   deploy-trigger:
