@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Profile("!prod")
 @RestController
-@RequestMapping("/v1/auth/dev")
+@RequestMapping("/api/v1/auth/dev")
 @RequiredArgsConstructor
 public class DevAuthApi implements DevAuthApiSpec {
 

@@ -26,7 +26,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtProvider jwtProvider;
     private final HttpUtil httpUtil;
 
-    @Value("${cors.front.prod}")
+    @Value("${auth.redirect.url}")
     private String REDIRECT_PATH;
 
     /*

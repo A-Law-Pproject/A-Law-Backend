@@ -37,6 +37,9 @@ public class HttpUtil {
     @Value("${auth.cookie.pathOption}")
     private String cookiePathOption;
 
+    @Value("${auth.cookie.domain}")
+    private String cookieDomain;
+
 
     /// 액세스 토큰 쿠키 가져오기
     public Optional<String> getAccessToken(HttpServletRequest request) {
@@ -112,14 +115,18 @@ public class HttpUtil {
     /// 쿠키 생성하기
     private void createCookie(HttpServletResponse response, String cookieName, String cookieValue, long maxAge) {
 
-        ResponseCookie cookie = ResponseCookie.from(cookieName, cookieValue)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, cookieValue)
                 .maxAge(maxAge)
                 .path(cookiePathOption)
                 .httpOnly(true)
-                .secure(secureOption)  // Dev/Prod 환경에 따라 설정됨
-                .sameSite(sameSiteOption)
-                .domain("a-law.site")
-                .build();
+                .secure(secureOption)
+                .sameSite(sameSiteOption);
+
+        if (cookieDomain != null && !cookieDomain.equals("localhost")) {
+            builder.domain(cookieDomain);
+        }
+
+        ResponseCookie cookie = builder.build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
@@ -146,15 +153,18 @@ public class HttpUtil {
 
     /// 공통 쿠키 삭제 메서드
     private void deleteCookie(HttpServletResponse response, String cookieName) {
-        ResponseCookie cookie = ResponseCookie.from(cookieName, "")
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
                 .maxAge(0)
                 .path(cookiePathOption)
                 .secure(secureOption)
                 .httpOnly(true)
-                .sameSite(sameSiteOption)
-                .build();
+                .sameSite(sameSiteOption);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        if (cookieDomain != null && !cookieDomain.equals("localhost")) {
+            builder.domain(cookieDomain);
+        }
+
+        response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
     }
 
     /// 요청자의 실제 IP를 조회하기 위한 함수

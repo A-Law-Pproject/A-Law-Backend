@@ -40,6 +40,7 @@ public class CorsConfig {
         configuration.setAllowCredentials(true);
 
         configuration.addExposedHeader("Authorization");
+        configuration.addExposedHeader("Set-Cookie");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
