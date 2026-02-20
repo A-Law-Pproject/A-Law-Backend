@@ -7,13 +7,11 @@ import com.service.alaw.security.jwt.application.dto.JwtTokenResponse;
 import com.service.alaw.common.util.HttpUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Profile("!prod")
 @RestController
 @RequestMapping("/api/v1/auth/dev")
 @RequiredArgsConstructor
