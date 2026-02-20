@@ -74,6 +74,38 @@ public class HttpUtil {
         createCookie(httpServletResponse, REFRESH_TOKEN, refreshToken, refreshExpiration);
     }
 
+    /// 로그인 flag 쿠키 추가 (프론트에서 읽기 가능)
+    public void addLoginFlagCookie(HttpServletResponse response) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("is_logged_in", "true")
+                .maxAge(accessExpiration)
+                .path(cookiePathOption)
+                .httpOnly(false)
+                .secure(secureOption)
+                .sameSite(sameSiteOption);
+
+        if (cookieDomain != null && !cookieDomain.equals("localhost")) {
+            builder.domain(cookieDomain);
+        }
+
+        response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
+    }
+
+    /// 로그인 flag 쿠키 삭제
+    public void removeLoginFlagCookie(HttpServletResponse response) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("is_logged_in", "")
+                .maxAge(0)
+                .path(cookiePathOption)
+                .httpOnly(false)
+                .secure(secureOption)
+                .sameSite(sameSiteOption);
+
+        if (cookieDomain != null && !cookieDomain.equals("localhost")) {
+            builder.domain(cookieDomain);
+        }
+
+        response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
+    }
+
     /// 액세스 토큰을 삭제하기
     public void removeAccessTokenCookie(HttpServletResponse httpServletResponse) {
         deleteCookie(httpServletResponse, ACCESS_TOKEN);

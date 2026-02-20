@@ -50,9 +50,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             /// HTTP 쿠키 추가
             httpUtil.addAccessTokenCookie(httpServletResponse, accessToken);
             httpUtil.addRefreshTokenCookie(httpServletResponse, refreshToken);
-
-            /// 시큐리티 홀더에 해당 멤버 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            httpUtil.addLoginFlagCookie(httpServletResponse);
 
             /// 쿠키와 함께 리다이렉트 (프론트 마이페이지)
             getRedirectStrategy().sendRedirect(httpServletRequest, httpServletResponse, REDIRECT_PATH + "/mypage");

@@ -47,6 +47,7 @@ public class AuthApi implements AuthApiSpec {
         /// 쿠키 삭제하기
         httpUtil.removeAccessTokenCookie(httpServletResponse);
         httpUtil.removeRefreshTokenCookie(httpServletResponse);
+        httpUtil.removeLoginFlagCookie(httpServletResponse);
 
         /// 리턴
         return ApiResponse.deleted();
