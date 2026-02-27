@@ -26,7 +26,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtProvider jwtProvider;
     private final HttpUtil httpUtil;
 
-    @Value("${spring.front.host}")
+    @Value("${auth.redirect.url}")
     private String REDIRECT_PATH;
 
     /*
@@ -50,12 +50,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             /// HTTP 쿠키 추가
             httpUtil.addAccessTokenCookie(httpServletResponse, accessToken);
             httpUtil.addRefreshTokenCookie(httpServletResponse, refreshToken);
+            httpUtil.addLoginFlagCookie(httpServletResponse);
 
-            /// 시큐리티 홀더에 해당 멤버 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            /// 쿠키와 함께 리다이렉트 (프론트 홈 주소)
-            getRedirectStrategy().sendRedirect(httpServletRequest, httpServletResponse, REDIRECT_PATH);
+            /// 쿠키와 함께 리다이렉트 (프론트 마이페이지)
+            getRedirectStrategy().sendRedirect(httpServletRequest, httpServletResponse, REDIRECT_PATH + "/mypage");
         } catch (Exception e) {
             log.error("OAuth2 로그인 처리 중 에러 발생", e);
             httpServletResponse.sendRedirect(REDIRECT_PATH + "/login?error=auth_failed");

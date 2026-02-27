@@ -1,14 +1,12 @@
 package com.service.alaw.security.oauth2.service;
 
-import com.service.alaw.common.exception.BaseException;
 import com.service.alaw.common.exception.code.SecurityErrorCode;
+import com.service.alaw.platform.user.domain.entity.Provider;
 import com.service.alaw.platform.user.domain.entity.User;
 import com.service.alaw.platform.user.domain.repository.UserRepository;
 import com.service.alaw.security.oauth2.domain.OAuth2UserInfo;
 import com.service.alaw.security.oauth2.domain.PrincipalDetails;
-import com.service.alaw.security.oauth2.domain.TempUserInfo;
 import com.service.alaw.security.oauth2.domain.kakao.KakaoUserInfo;
-import com.service.alaw.security.oauth2.handler.SignupRequiredException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -47,19 +44,22 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         /// OAuth2를 바탕으로 정보 생성
         OAuth2UserInfo userInfo = createOAuth2User(registrationId, oAuth2UserAttributes);
 
-        // 이메일로 기존 유저 조회 (소셜 로그인 연동 로직 필요시 수정)
-        Optional<User> existUser = userRepository.findByProviderId(userInfo.getProviderId());
+        // providerId로 기존 유저 조회
+        User user = userRepository.findByProviderId(userInfo.getProviderId())
+                .orElseGet(() -> {
+                    // 신규 유저 자동 회원가입
+                    log.info("신규 OAuth2 유저 자동 가입 - provider: {}, providerId: {}",
+                            userInfo.getProvider(), userInfo.getProviderId());
+                    User newUser = User.of(
+                            userInfo.getUserName(),
+                            Provider.valueOf(userInfo.getProvider().toUpperCase()),
+                            userInfo.getProviderId(),
+                            userInfo.getImageUrl()
+                    );
+                    return userRepository.save(newUser);
+                });
 
-        /// 존재한다면 로그인
-        if (existUser.isPresent()) {
-            ///  이미 존재하는 유저를 반환한다.
-            User user = existUser.get();
-            return PrincipalDetails.of(user, oAuth2UserAttributes);
-        } else {
-            /// 기존에 유저가 없다면, 실패 핸들러로 예외 던지기
-            var temp = TempUserInfo.from(userInfo);
-            throw new SignupRequiredException(temp);
-        }
+        return PrincipalDetails.of(user, oAuth2UserAttributes);
 
     }
 

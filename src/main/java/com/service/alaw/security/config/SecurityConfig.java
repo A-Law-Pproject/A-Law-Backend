@@ -15,6 +15,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import com.service.alaw.security.oauth2.CookieOAuth2AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -70,6 +73,9 @@ public class SecurityConfig {
                     auth.anyRequest().authenticated();
                 })
                  .oauth2Login(oauth2 -> oauth2
+                         .authorizationEndpoint(auth -> auth
+                                 .authorizationRequestRepository(authorizationRequestRepository())
+                         )
                          .userInfoEndpoint(userInfo -> userInfo
                                  .userService(oAuth2UserService)
                          )
@@ -84,5 +90,10 @@ public class SecurityConfig {
 
 
         return http.build();
+    }
+
+    @Bean
+    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+        return new CookieOAuth2AuthorizationRequestRepository();
     }
 }

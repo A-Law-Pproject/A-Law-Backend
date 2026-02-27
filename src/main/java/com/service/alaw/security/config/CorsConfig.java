@@ -22,6 +22,9 @@ public class CorsConfig {
     @Value("${cors.back.dev}")
     private String back_dev;
 
+    @Value("${cors.back.prod}")
+    private String back_prod;
+
     /**
      * CORS 설정을 진행합니다.
      */
@@ -34,12 +37,14 @@ public class CorsConfig {
         configuration.addAllowedOriginPattern(front_dev);
         configuration.addAllowedOriginPattern(front_prod);
         configuration.addAllowedOriginPattern(back_dev);
+        configuration.addAllowedOriginPattern(back_prod);
 
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.setAllowCredentials(true);
 
         configuration.addExposedHeader("Authorization");
+        configuration.addExposedHeader("Set-Cookie");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

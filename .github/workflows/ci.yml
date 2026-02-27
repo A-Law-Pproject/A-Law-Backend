@@ -1,0 +1,123 @@
+name: A-LAW CI 파이프라인
+
+on:
+  push:
+    branches: ["main", "develop", "qa/release-v0.0.1"]
+  pull_request:
+    branches: ["main", "develop", "qa/release-v0.0.1"]
+
+jobs:
+  # 1. 테스트 단계 (코드 품질 검증)
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+#      - name: Run tests
+#        env:
+#          SPRING_PROFILES_ACTIVE: test
+#          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+#          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+#          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+#          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+#          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+#          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+#        run: ./gradlew clean test
+
+#      - name: Test Report
+#        uses: dorny/test-reporter@v1
+#        if: success() || failure()
+#        with:
+#          name: Gradle Tests
+#          path: build/test-results/test/*.xml
+#          reporter: java-junit
+
+  # 2. 빌드 및 푸시 단계 (Docker 내부 빌드 활용)
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # [중요] Docker가 COPY . . 를 할 때 application.yml이 포함되어야 합니다.
+      - name: application.yml 생성 (빌드 포함용)
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/application.yml << 'EOF'
+          ${{ secrets.APPLICATION_YML }}
+          EOF
+
+      - name: application.yml 검증
+        run: |
+          echo "=== prod datasource 확인 ==="
+          grep -A3 "datasource" src/main/resources/application.yml | grep "url"
+          if grep -q "url:$" src/main/resources/application.yml; then
+            echo "❌ ERROR: DB_URL이 비어있습니다!"
+            exit 1
+          fi
+          echo "✅ application.yml 정상 확인"
+          
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Docker 메타데이터 추출
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/alaw-be
+          tags: |
+            type=sha,prefix=,format=long
+            type=ref,event=branch
+            type=raw,value=latest
+
+      - name: Docker 이미지 빌드 & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          no-cache: true
+
+  # 3. 인프라 레포 배포 트리거
+  deploy-trigger:
+    needs: build-and-push
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Infra 레포에 배포 트리거
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          repository: ${{ github.repository_owner }}/A-Law-Cloud
+          event-type: deploy-backend
+          client-payload: |
+            {
+              "image_tag": "latest",
+              "service": "spring",
+              "branch": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}"
+            }

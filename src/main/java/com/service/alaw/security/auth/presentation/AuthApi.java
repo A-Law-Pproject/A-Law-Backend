@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthApi implements AuthApiSpec {
 
@@ -47,6 +47,7 @@ public class AuthApi implements AuthApiSpec {
         /// 쿠키 삭제하기
         httpUtil.removeAccessTokenCookie(httpServletResponse);
         httpUtil.removeRefreshTokenCookie(httpServletResponse);
+        httpUtil.removeLoginFlagCookie(httpServletResponse);
 
         /// 리턴
         return ApiResponse.deleted();

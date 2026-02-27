@@ -48,6 +48,7 @@ public class DevAuthService {
             User dev = User.builder()
                     .name("DevUser")
                     .role(UserRole.ADMIN)
+                    .providerId("dev-provider-001")
                     .profileImage(null)
                     .build();
             user = repository.save(dev);
