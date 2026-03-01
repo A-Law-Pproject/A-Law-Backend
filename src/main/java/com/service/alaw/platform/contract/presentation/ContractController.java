@@ -20,14 +20,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/contracts")
 @RequiredArgsConstructor
-public class ContractController implements ContractSpec {
+public class ContractController {
 
   private final ContractService contractService;
 
   private static final Set<String> ALLOWED_CONTENT_TYPES =
       Set.of("image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf");
 
-  @Override
   @PostMapping(value = "/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<FastApiOcrResponse>> processOcr(
       @RequestParam("file") MultipartFile imageFile, @CurrentUserId Long userId) {

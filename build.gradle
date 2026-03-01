@@ -88,6 +88,10 @@ dependencies {
 
     // health check
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // monitoring
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
 }
 
 

@@ -28,17 +28,23 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.routing-key}")
     private String routingKey;
 
+    @Value("${app.rabbitmq.result-queue}")
+    private String resultQueueName;
+
+    @Value("${app.rabbitmq.result-routing-key}")
+    private String resultRoutingKey;
+
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(messageConverter());
-        return rabbitTemplate;
-    }
+//    @Bean
+//    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+//        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+//        rabbitTemplate.setMessageConverter(messageConverter());
+//        return rabbitTemplate;
+//    }
 
     // Exchange: Direct (특정 큐로 라우팅)
     @Bean
@@ -87,5 +93,19 @@ public class RabbitMQConfig {
                 .bind(deadLetterQueue())
                 .to(deadLetterExchange())
                 .with(routingKey + ".failed");
+    }
+
+    // 분석 결과 수신용 큐
+    @Bean
+    public Queue resultQueue() {
+        return new Queue(resultQueueName, true);
+    }
+
+    @Bean
+    public Binding resultBinding() {
+        return BindingBuilder
+                .bind(resultQueue())
+                .to(contractExchange())
+                .with(resultRoutingKey);
     }
 }
