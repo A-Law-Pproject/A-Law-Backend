@@ -46,8 +46,9 @@ public class OCRClient {
                     .bodyToMono(FastApiOcrResponse.class)
                     .block(Duration.ofSeconds(30));
 
-            log.info("FastAPI OCR 응답 - 블록 수: {}, 이미지 크기: {}x{}, 처리시간: {}s",
-                    response.blocks() != null ? response.blocks().size() : 0);
+            log.info("FastAPI OCR 응답 수신 - success: {}, 단어 수: {}",
+                    response.success(),
+                    response.words() != null ? response.words().size() : 0);
 
 
             return response;

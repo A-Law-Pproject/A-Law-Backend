@@ -4,22 +4,45 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
+import java.util.Map;
 
-@Schema(description = "OCR 결과 응답")
+@Schema(description = "FastAPI OCR 응답")
 public record FastApiOcrResponse(
-    @Schema(description = "작업 ID (비동기 처리 추적용)", example = "550e8400-e29b-41d4-a716-446655440000")
-    @JsonProperty("job_id")
-    String jobId,
+        @JsonProperty("success")
+        boolean success,
 
-    @Schema(description = "처리 상태", example = "ocr_complete")
-    @JsonProperty("status") String status,
+        @JsonProperty("processing_time")
+        double processingTime,
 
-    @Schema(description = "S3 이미지 URL", example = "https://s3.amazonaws.com/bucket/image.png")
-    @JsonProperty("image_url")
-    String imageUrl,
+        @Schema(description = "S3 이미지 URL (Spring에서 주입)")
+        @JsonProperty("image_url")
+        String imageUrl,
 
+        @JsonProperty("image_width")
+        int imageWidth,
 
-    @Schema(description = "텍스트 블록 목록 (좌표는 % 단위)")
-    @JsonProperty("blocks")
-    List<OcrBlock> blocks
+        @JsonProperty("image_height")
+        int imageHeight,
+
+        @JsonProperty("full_text")
+        String fullText,
+
+        @JsonProperty("markdown")
+        String markdown,
+
+        @JsonProperty("contract_data")
+        Map<String, Object> contractData,
+
+        @JsonProperty("validation")
+        Map<String, Object> validation,
+
+        @Schema(description = "단어별 OCR 결과 (좌표 포함)")
+        @JsonProperty("words")
+        List<OcrBlock> words,
+
+        @JsonProperty("warnings")
+        List<String> warnings,
+
+        @JsonProperty("error")
+        String error
 ) {}

@@ -38,11 +38,15 @@ public class RequestMatcherHolder {
             new RequestInfo(DELETE, "/api/v1/users", UserRole.User),
 
             // contracts
+            new RequestInfo(POST, "/api/v1/contracts/ocr", null),   // OCR 테스트용 인증 제외
             new RequestInfo(GET, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(POST, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(PUT, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(DELETE, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(PATCH, "/api/v1/contracts/**", UserRole.User),
+
+            // chatbot
+            new RequestInfo(POST, "/api/v1/chat", UserRole.User),
 
             // likes
             new RequestInfo(POST, "/api/v1/likes/**", UserRole.User),
@@ -60,11 +64,16 @@ public class RequestMatcherHolder {
             new RequestInfo(GET, "/swagger-resources/**", null),
             new RequestInfo(GET, "/webjars/**", null),
 
+            // OCR 테스트 페이지
+            new RequestInfo(GET, "/test/ocr", null),
+            new RequestInfo(POST, "/test/ocr", null),
+
             // 정적 리소스
             new RequestInfo(GET, "/docs/**", null),
             new RequestInfo(GET, "/resources/**", null),
             new RequestInfo(GET, "/favicon.ico", null),
-            new RequestInfo(GET, "/apple-touch-icon.png", null)
+            new RequestInfo(GET, "/apple-touch-icon.png", null),
+            new RequestInfo(GET, "/ocr-overlay.html", null)
 
     );
 
