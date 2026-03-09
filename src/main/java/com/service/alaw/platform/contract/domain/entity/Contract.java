@@ -109,4 +109,8 @@ public class Contract extends BaseTimeEntity {
   public void updateFileUrl(String fileUrl) {
     this.fileUrl = fileUrl;
   }
+
+  public void saveAnalysisResult(String summaryText, int riskCount) {
+    this.status = ContractStatus.COMPLETED;
+  }
 }

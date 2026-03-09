@@ -7,21 +7,34 @@ import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.application.dto.analysis.ContractAnalysisMessage;
 import com.service.alaw.platform.contract.application.dto.ocr.FastApiOcrResponse;
 import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
+import com.service.alaw.platform.contract.domain.entity.AnalysisJob;
+import com.service.alaw.platform.contract.domain.entity.Contract;
+import com.service.alaw.platform.contract.domain.repository.AnalysisJobRepository;
+import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
+import com.service.alaw.platform.user.domain.entity.User;
+import com.service.alaw.platform.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ContractService {
 
   private final S3UploadService s3Service;
   private final OCRClient ocrClient;
   private final ContractAnalysisPublisher publisher;
   private final OcrResultDocumentRepository ocrResultRepository;
+  private final ContractRepository contractRepository;
+  private final UserRepository userRepository;
+  private final AnalysisJobRepository analysisJobRepository;
 
   public FastApiOcrResponse uploadAndOCR(MultipartFile file, Long userId) {
     try {
@@ -53,13 +66,28 @@ public class ContractService {
       ocrResultRepository.save(ocrDocument);
       log.info("OCR 결과 MongoDB 저장 완료 - s3Key: {}", s3Key);
 
-      // 4. 분석 작업을 큐에 전송 (비동기 처리)
+      // 4. Contract PostgreSQL 저장 (title은 파일명으로 임시 저장, contractType은 나중에 수동 입력)
+      User user = userRepository.findById(userId)
+              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
+      String tempTitle = file.getOriginalFilename() != null ? file.getOriginalFilename() : "미제목";
+      Contract contract = Contract.of(user, tempTitle, imageUrl, null);
+      Contract savedContract = contractRepository.save(contract);
+      log.info("Contract PostgreSQL 저장 완료 - contractId={}", savedContract.getContractId());
+
+      // 5. 분석 작업을 큐에 전송 (비동기 처리)
+      String jobId = UUID.randomUUID().toString();
+      AnalysisJob analysisJob = AnalysisJob.of(jobId, savedContract.getContractId());
+      analysisJobRepository.save(analysisJob);
+      log.info("AnalysisJob 저장 완료 - jobId: {}, contractId: {}", jobId, savedContract.getContractId());
+
       ContractAnalysisMessage message = ContractAnalysisMessage.builder()
+              .jobId(jobId)
               .s3Key(s3Key)
               .userId(userId)
+              .contractId(savedContract.getContractId())
               .build();
       publisher.publish(message);
-      log.info("계약서 분석 작업 큐에 전송 완료 - s3Key: {}", s3Key);
+      log.info("계약서 분석 작업 큐에 전송 완료 - jobId: {}, s3Key: {}, contractId: {}", jobId, s3Key, savedContract.getContractId());
 
       // 5. imageUrl을 포함한 최종 응답 반환
       return new FastApiOcrResponse(

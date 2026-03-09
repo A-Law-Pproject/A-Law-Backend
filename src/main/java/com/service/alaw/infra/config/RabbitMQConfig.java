@@ -27,6 +27,9 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.ai-result-queue}")
     private String aiResultQueueName;     // ai.result.queue
 
+    @Value("${app.rabbitmq.result-queue}")
+    private String resultQueueName;       // contract-analysis-result-queue
+
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
@@ -84,6 +87,17 @@ public class RabbitMQConfig {
     @Bean
     public Binding aiResultBinding() {
         return BindingBuilder.bind(aiResultQueue()).to(aiResultExchange()).with("ai.result");
+    }
+
+    /** Job 상태 추적 전용 Queue (ContractAnalysisResultConsumer 구독) */
+    @Bean
+    public Queue contractResultQueue() {
+        return new Queue(resultQueueName, true);
+    }
+
+    @Bean
+    public Binding contractResultBinding() {
+        return BindingBuilder.bind(contractResultQueue()).to(aiResultExchange()).with("ai.result");
     }
 
     @Bean
