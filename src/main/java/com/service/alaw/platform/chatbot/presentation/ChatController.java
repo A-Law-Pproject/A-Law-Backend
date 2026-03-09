@@ -4,6 +4,7 @@ import com.service.alaw.common.response.ApiResponse;
 import com.service.alaw.platform.chatbot.application.dto.ChatRequest;
 import com.service.alaw.platform.chatbot.application.dto.ChatResponse;
 import com.service.alaw.platform.chatbot.application.service.ChatService;
+import com.service.alaw.platform.chatbot.presentation.swagger.ChatSpec;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
-public class ChatController {
+public class ChatController implements ChatSpec {
 
     private final ChatService chatService;
 
