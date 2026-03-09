@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/contracts")
 @RequiredArgsConstructor
-public class ContractController {
+public class ContractController implements ContractSpec {
 
   private final ContractService contractService;
 

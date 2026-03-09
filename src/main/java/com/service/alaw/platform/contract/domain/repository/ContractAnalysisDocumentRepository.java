@@ -10,4 +10,6 @@ public interface ContractAnalysisDocumentRepository
     extends MongoRepository<ContractAnalysisDocument, String> {
 
   Optional<ContractAnalysisDocument> findByContractId(Long contractId);
+
+  Optional<ContractAnalysisDocument> findByS3Key(String s3Key);
 }

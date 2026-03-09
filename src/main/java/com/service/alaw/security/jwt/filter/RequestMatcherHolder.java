@@ -38,7 +38,7 @@ public class RequestMatcherHolder {
             new RequestInfo(DELETE, "/api/v1/users", UserRole.User),
 
             // contracts
-            new RequestInfo(POST, "/api/v1/contracts/ocr", null),   // OCR 테스트용 인증 제외
+            new RequestInfo(POST, "/api/v1/contracts/ocr", UserRole.User),
             new RequestInfo(GET, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(POST, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(PUT, "/api/v1/contracts/**", UserRole.User),
@@ -64,7 +64,7 @@ public class RequestMatcherHolder {
             new RequestInfo(GET, "/swagger-resources/**", null),
             new RequestInfo(GET, "/webjars/**", null),
 
-            // OCR 테스트 페이지
+            // OCR 테스트 페이지 (local 프로파일에서만 컨트롤러 활성화됨)
             new RequestInfo(GET, "/test/ocr", null),
             new RequestInfo(POST, "/test/ocr", null),
 

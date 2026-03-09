@@ -16,6 +16,6 @@ public class ContractValidator {
   public Contract validateContractOwnership(Long contractId, Long userId) {
     return contractRepository
         .findByContractIdAndUser_UserId(contractId, userId)
-        .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.CONFLICT));
+        .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
   }
 }

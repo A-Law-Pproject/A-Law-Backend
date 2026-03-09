@@ -1,10 +1,13 @@
 package com.service.alaw.platform.contract.application.service;
 
+import com.service.alaw.common.exception.FastApiException;
 import com.service.alaw.infra.messaging.ContractAnalysisPublisher;
 import com.service.alaw.infra.ocr.OCRClient;
 import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.application.dto.analysis.ContractAnalysisMessage;
 import com.service.alaw.platform.contract.application.dto.ocr.FastApiOcrResponse;
+import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
+import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ public class ContractService {
   private final S3UploadService s3Service;
   private final OCRClient ocrClient;
   private final ContractAnalysisPublisher publisher;
+  private final OcrResultDocumentRepository ocrResultRepository;
 
   public FastApiOcrResponse uploadAndOCR(MultipartFile file, Long userId) {
     try {
@@ -33,7 +37,23 @@ public class ContractService {
               ocrResponse.imageWidth(), ocrResponse.imageHeight(),
               ocrResponse.processingTime());
 
-      // 3. 분석 작업을 큐에 전송 (비동기 처리)
+      // 3. OCR 결과 MongoDB 저장
+      OcrResultDocument ocrDocument = OcrResultDocument.of(
+              s3Key,
+              imageUrl,
+              ocrResponse.imageWidth(),
+              ocrResponse.imageHeight(),
+              ocrResponse.fullText(),
+              ocrResponse.markdown(),
+              ocrResponse.contractData(),
+              ocrResponse.validation(),
+              ocrResponse.words(),
+              ocrResponse.warnings()
+      );
+      ocrResultRepository.save(ocrDocument);
+      log.info("OCR 결과 MongoDB 저장 완료 - s3Key: {}", s3Key);
+
+      // 4. 분석 작업을 큐에 전송 (비동기 처리)
       ContractAnalysisMessage message = ContractAnalysisMessage.builder()
               .s3Key(s3Key)
               .userId(userId)
@@ -41,7 +61,7 @@ public class ContractService {
       publisher.publish(message);
       log.info("계약서 분석 작업 큐에 전송 완료 - s3Key: {}", s3Key);
 
-      // 4. imageUrl을 포함한 최종 응답 반환
+      // 5. imageUrl을 포함한 최종 응답 반환
       return new FastApiOcrResponse(
               ocrResponse.success(),
               ocrResponse.processingTime(),
@@ -57,9 +77,12 @@ public class ContractService {
               ocrResponse.error()
       );
 
-    } catch (Exception e) {
+    } catch (FastApiException e) {
       log.error("OCR 처리 실패: {}", e.getMessage(), e);
-      throw new RuntimeException("OCR 처리 중 오류가 발생했습니다.", e);
+      throw e;
+    } catch (Exception e) {
+      log.error("OCR 처리 중 예상치 못한 오류 발생", e);
+      throw new FastApiException("OCR 처리 중 오류가 발생했습니다.", e);
     }
   }
 }

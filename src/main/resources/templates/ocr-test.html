@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>OCR Overlay Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .controls { padding: 16px 20px; background: #f8f9fa; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+        .btn { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn:hover { opacity: 0.85; }
+        .error { margin: 12px 20px; padding: 10px 14px; background: #fbe9e7; color: #c62828; border-radius: 4px; font-size: 14px; }
+        #viewer { min-height: 300px; display: flex; justify-content: center; align-items: flex-start; padding: 20px; background: #e8e8e8; overflow: auto; }
+        .image-wrapper { position: relative; display: inline-block; }
+        .image-wrapper img { display: block; max-width: 100%; }
+        .word-overlay {
+            position: absolute;
+            color: transparent;
+            cursor: text;
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1;
+            font-size: 12px;
+        }
+        .word-overlay::selection { background: rgba(0, 100, 255, 0.3); color: transparent; }
+        .word-overlay.debug { border: 1px solid rgba(255, 0, 0, 0.5); background: rgba(255, 255, 0, 0.1); }
+        .info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px 20px; background: #f8f9fa; }
+        .info-card .label { font-size: 11px; color: #888; text-transform: uppercase; }
+        .info-card .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+        .info-card .value.text { font-size: 13px; font-weight: 400; max-height: 60px; overflow: auto; }
+        label.debug-label { font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>OCR Text Overlay</h1>
+        <p>이미지 위에 투명 텍스트를 올려 드래그 &amp; 복사가 가능합니다</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" action="/test/ocr">
+        <div class="controls">
+            <input type="file" name="file" id="fileInput" accept="image/*,application/pdf" style="display:none"
+                   onchange="document.getElementById('fileName').textContent = this.files[0]?.name ?? ''">
+            <label for="fileInput" class="btn" style="cursor:pointer">이미지 선택</label>
+            <span id="fileName" style="font-size:13px; color:#555;"></span>
+            <button type="submit" class="btn">OCR 실행</button>
+            <label class="debug-label">
+                <input type="checkbox" id="toggleDebug" onchange="toggleDebugMode(this.checked)"> 박스 표시 (디버그)
+            </label>
+        </div>
+    </form>
+
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+
+    <div id="viewer">
+        <div th:if="${ocr}" class="image-wrapper" id="imageWrapper">
+            <img th:src="${ocr.imageUrl}" id="baseImage" alt="OCR 이미지">
+
+            <span th:each="word : ${ocr.words}"
+                  class="word-overlay"
+                  th:text="${word.text}"
+                  th:style="|left:${word.x}%;top:${word.y}%;width:${word.width}%;height:${word.height}%;|">
+            </span>
+        </div>
+        <p th:unless="${ocr}" style="color:#999; padding:100px;">이미지를 선택하고 OCR 실행을 눌러주세요</p>
+    </div>
+
+    <div th:if="${ocr}" class="info">
+        <div class="info-card">
+            <div class="label">이미지 크기</div>
+            <div class="value" th:text="${ocr.imageWidth} + ' x ' + ${ocr.imageHeight}">-</div>
+        </div>
+        <div class="info-card">
+            <div class="label">처리 시간</div>
+            <div class="value" th:text="${ocr.processingTime} + '초'">-</div>
+        </div>
+        <div class="info-card">
+            <div class="label">단어 수</div>
+            <div class="value" th:text="${ocr.words != null ? ocr.words.size() : 0} + '개'">-</div>
+        </div>
+        <div class="info-card">
+            <div class="label">전체 텍스트</div>
+            <div class="value text" th:text="${#strings.abbreviate(ocr.fullText ?: '', 300)}">-</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDebugMode(on) {
+        document.querySelectorAll('.word-overlay').forEach(el => el.classList.toggle('debug', on));
+    }
+
+    // 이미지 로드 후 오버레이 font-size를 height에 맞게 조정
+    const img = document.getElementById('baseImage');
+    if (img) {
+        const adjust = () => {
+            const h = img.clientHeight;
+            document.querySelectorAll('.word-overlay').forEach(el => {
+                const pct = parseFloat(el.style.height);
+                el.style.fontSize = Math.max((pct / 100) * h * 0.85, 8) + 'px';
+            });
+        };
+        img.complete ? adjust() : img.addEventListener('load', adjust);
+    }
+</script>
+</body>
+</html>
