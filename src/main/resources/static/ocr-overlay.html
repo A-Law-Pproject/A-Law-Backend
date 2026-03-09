@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OCR Overlay Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .btn { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; font-size: 14px; }
+        .btn:hover { opacity: 0.85; }
+        .btn.secondary { background: white; color: #333; border: 1px solid #ddd; }
+        input[type="file"] { display: none; }
+        .controls { padding: 16px 20px; background: #f8f9fa; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+#status { padding: 6px 14px; border-radius: 4px; font-size: 13px; display: none; }
+        #status.ok { display: inline-block; background: #e8f5e9; color: #2e7d32; }
+        #status.err { display: inline-block; background: #fbe9e7; color: #c62828; }
+        #status.loading { display: inline-block; background: #e3f2fd; color: #1565c0; }
+        #viewer { min-height: 500px; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow: auto; background: #e8e8e8; }
+        .image-wrapper { position: relative; display: inline-block; }
+        .image-wrapper img { max-width: 100%; display: block; }
+        .word-overlay {
+            position: absolute;
+            color: transparent;
+            cursor: text;
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1;
+        }
+        .word-overlay::selection { background: rgba(0, 100, 255, 0.3); color: transparent; }
+        .word-overlay.debug { border: 1px solid rgba(255, 0, 0, 0.4); background: rgba(255, 255, 0, 0.08); }
+        .info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px 20px; background: #f8f9fa; }
+        .info-card { padding: 12px; }
+        .info-card .label { font-size: 11px; color: #888; text-transform: uppercase; }
+        .info-card .value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OCR Text Overlay</h1>
+            <p>이미지 위에 투명 텍스트를 올려 드래그 &amp; 복사가 가능합니다</p>
+        </div>
+
+        <div class="controls">
+            <label for="file" class="btn">이미지 선택</label>
+            <input type="file" id="file" accept="image/*">
+            <button class="btn" id="btnOcr">OCR 실행</button>
+            <label style="cursor:pointer; font-size:14px;">
+                <input type="checkbox" id="toggleDebug"> 박스 표시 (디버그)
+            </label>
+            <span id="status"></span>
+        </div>
+
+        <div id="viewer">
+            <p style="color: #999; padding: 100px;">이미지를 선택하고 OCR 실행을 눌러주세요</p>
+        </div>
+
+        <div class="info" id="infoPanel" style="display:none;">
+            <div class="info-card"><div class="label">이미지 크기</div><div class="value" id="infoSize">-</div></div>
+            <div class="info-card"><div class="label">처리 시간</div><div class="value" id="infoTime">-</div></div>
+            <div class="info-card"><div class="label">단어 수</div><div class="value" id="infoWords">-</div></div>
+            <div class="info-card"><div class="label">전체 텍스트</div><div class="value" id="infoText" style="font-size:13px; font-weight:400; max-height:60px; overflow:auto;">-</div></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1/contracts';
+        let currentFile = null;
+        let ocrData = null;
+
+        document.getElementById('file').onchange = e => {
+            const f = e.target.files[0];
+            if (!f) return;
+            currentFile = f;
+            ocrData = null;
+
+            const r = new FileReader();
+            r.onload = ev => {
+                showImage(ev.target.result);
+                setStatus('이미지 로드됨 — "OCR 실행" 클릭', 'ok');
+            };
+            r.readAsDataURL(f);
+        };
+
+        document.getElementById('btnOcr').onclick = async () => {
+            if (!currentFile) { setStatus('먼저 이미지를 선택하세요', 'err'); return; }
+
+            setStatus('OCR 처리 중...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', currentFile);
+
+                const res = await fetch(API_BASE + '/ocr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + (await res.text()));
+
+                // Spring Boot는 ApiResponse<FastApiOcrResponse>로 래핑해서 반환
+                const result = await res.json();
+                ocrData = result.data;
+                console.log('OCR 응답:', ocrData);
+
+                const wordCount = ocrData.words ? ocrData.words.length : 0;
+                setStatus(`OCR 완료! ${wordCount}개 단어 감지 (${ocrData.processing_time}초)`, 'ok');
+                renderOverlay();
+                updateInfo();
+            } catch (err) {
+                setStatus('OCR 실패: ' + err.message, 'err');
+                console.error(err);
+            }
+        };
+
+        document.getElementById('toggleDebug').onchange = () => {
+            document.querySelectorAll('.word-overlay').forEach(el => {
+                el.classList.toggle('debug', document.getElementById('toggleDebug').checked);
+            });
+        };
+
+        function showImage(src) {
+            const viewer = document.getElementById('viewer');
+            viewer.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper';
+            wrapper.id = 'imageWrapper';
+            const img = document.createElement('img');
+            img.src = src;
+            img.id = 'baseImage';
+            wrapper.appendChild(img);
+            viewer.appendChild(wrapper);
+        }
+
+        function renderOverlay() {
+            if (!ocrData || !ocrData.words) return;
+
+            const wrapper = document.getElementById('imageWrapper');
+            const img = document.getElementById('baseImage');
+            if (!wrapper || !img) return;
+
+            wrapper.querySelectorAll('.word-overlay').forEach(el => el.remove());
+
+            const debug = document.getElementById('toggleDebug').checked;
+
+            const place = () => {
+                const displayW = img.clientWidth;
+                const displayH = img.clientHeight;
+
+                ocrData.words.forEach(word => {
+                    const span = document.createElement('span');
+                    span.className = 'word-overlay' + (debug ? ' debug' : '');
+                    span.textContent = word.text;
+
+                    const left = (word.x / 100) * displayW;
+                    const top = (word.y / 100) * displayH;
+                    const w = (word.width / 100) * displayW;
+                    const h = (word.height / 100) * displayH;
+
+                    span.style.left = left + 'px';
+                    span.style.top = top + 'px';
+                    span.style.width = w + 'px';
+                    span.style.height = h + 'px';
+                    span.style.fontSize = Math.max(h * 0.85, 8) + 'px';
+
+                    wrapper.appendChild(span);
+                });
+            };
+
+            if (img.complete) place();
+            else img.onload = place;
+        }
+
+        function updateInfo() {
+            if (!ocrData) return;
+            document.getElementById('infoPanel').style.display = 'grid';
+            document.getElementById('infoSize').textContent = ocrData.image_width + ' x ' + ocrData.image_height;
+            document.getElementById('infoTime').textContent = ocrData.processing_time + '초';
+            document.getElementById('infoWords').textContent = (ocrData.words ? ocrData.words.length : 0) + '개';
+            document.getElementById('infoText').textContent = (ocrData.full_text || '').substring(0, 300);
+        }
+
+        function setStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = type;
+        }
+    </script>
+</body>
+</html>

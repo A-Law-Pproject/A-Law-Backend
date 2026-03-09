@@ -46,6 +46,20 @@ public class GlobalExceptionHandler {
         return build(ex.getErrorCode(), FORBIDDEN, ex);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(ApiResponse.error(CommonErrorCode.BAD_REQUEST, ex.getMessage()));
+    }
+
+    @ExceptionHandler(FastApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFastApi(FastApiException ex) {
+        log.error("FastAPI 호출 실패: {}", ex.getMessage());
+        return ResponseEntity.status(BAD_GATEWAY)
+                .body(ApiResponse.error(CommonErrorCode.BAD_GATEWAY, ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String aggregated = ex.getBindingResult().getFieldErrors().stream()

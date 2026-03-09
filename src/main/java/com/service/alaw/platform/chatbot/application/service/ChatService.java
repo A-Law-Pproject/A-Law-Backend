@@ -15,7 +15,7 @@ public class ChatService {
     private final AIClient aiClient;
 
     public ChatResponse chat(ChatRequest request) {
-        log.info("챗봇 서비스 요청 - message: {}", request.message());
+        log.info("챗봇 서비스 요청 - messageLength: {}", request.message() != null ? request.message().length() : 0);
         return aiClient.chat(request);
     }
 }
