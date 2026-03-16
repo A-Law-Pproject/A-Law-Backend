@@ -45,7 +45,10 @@ public class RabbitMQTestController {
                 new AnalysisResultMessage.SummaryDto(
                         "테스트 계약서",
                         "이것은 RabbitMQ 동작 확인을 위한 mock 분석 결과입니다.",
-                        List.of("임대", "보증금", "계약기간")
+                        List.of("임대", "보증금", "계약기간"),
+                        List.of("임대인", "임차인"),
+                        "1년",
+                        List.of("2024-01-01", "2025-01-01")
                 ),
                 new AnalysisResultMessage.RiskAnalysisDto(
                         3, 1, 1, 1, 33.3,
@@ -55,21 +58,24 @@ public class RabbitMQTestController {
                                         "계약 만료 시 보증금을 반환한다.",
                                         "RISK",
                                         "반환 기한 명시 필요",
-                                        "주택임대차보호법 제3조"
+                                        "주택임대차보호법 제3조",
+                                        "반환 기한이 명시되지 않아 분쟁 가능성이 있습니다."
                                 ),
                                 new AnalysisResultMessage.ClauseDto(
                                         "계약 갱신 조항",
                                         "임차인은 계약 갱신을 요구할 수 있다.",
                                         "CAUTION",
                                         "갱신 거절 사유 확인 필요",
-                                        "주택임대차보호법 제6조의3"
+                                        "주택임대차보호법 제6조의3",
+                                        "갱신 거절 사유가 명확하지 않습니다."
                                 ),
                                 new AnalysisResultMessage.ClauseDto(
                                         "관리비 조항",
                                         "관리비는 월 10만원으로 한다.",
                                         "SAFE",
                                         "적정 수준",
-                                        null
+                                        null,
+                                        "관리비 금액이 명확히 기재되어 있습니다."
                                 )
                         )
                 ),
