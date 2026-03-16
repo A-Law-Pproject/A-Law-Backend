@@ -76,7 +76,7 @@ public class ContractService {
 
       // 5. 분석 작업을 큐에 전송 (비동기 처리)
       String jobId = UUID.randomUUID().toString();
-      AnalysisJob analysisJob = AnalysisJob.of(jobId, savedContract.getContractId());
+      AnalysisJob analysisJob = AnalysisJob.of(jobId, savedContract.getContractId(),userId);
       analysisJobRepository.save(analysisJob);
       log.info("AnalysisJob 저장 완료 - jobId: {}, contractId: {}", jobId, savedContract.getContractId());
 
@@ -86,6 +86,7 @@ public class ContractService {
               .userId(userId)
               .contractId(savedContract.getContractId())
               .build();
+      log.info("발행 직전 message={}", message);
       publisher.publish(message);
       log.info("계약서 분석 작업 큐에 전송 완료 - jobId: {}, s3Key: {}, contractId: {}", jobId, s3Key, savedContract.getContractId());
 

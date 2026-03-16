@@ -23,6 +23,9 @@ public class AnalysisJob extends BaseTimeEntity {
     @Column(name = "contract_id", nullable = false)
     private Long contractId;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private AnalysisJobStatus status;
@@ -34,16 +37,18 @@ public class AnalysisJob extends BaseTimeEntity {
     private String errorMessage;
 
     @Builder
-    private AnalysisJob(String jobId, Long contractId) {
+    private AnalysisJob(String jobId, Long contractId, Long userId) {
         this.jobId = jobId;
         this.contractId = contractId;
+        this.userId = userId;
         this.status = AnalysisJobStatus.PENDING;
     }
 
-    public static AnalysisJob of(String jobId, Long contractId) {
+    public static AnalysisJob of(String jobId, Long contractId, Long userId) {
         return AnalysisJob.builder()
                 .jobId(jobId)
                 .contractId(contractId)
+                .userId(userId)
                 .build();
     }
 
