@@ -20,38 +20,38 @@ public class SseEmitterManager {
     /**
      * SSE 구독 등록
      */
-    public SseEmitter register(String s3Key) {
+    public SseEmitter register(String jobId) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        subscribers.putIfAbsent(s3Key, new CopyOnWriteArrayList<>());
-        subscribers.get(s3Key).add(emitter);
+        subscribers.putIfAbsent(jobId, new CopyOnWriteArrayList<>());
+        subscribers.get(jobId).add(emitter);
 
-        log.info("[SSE] New subscription for s3Key={}", s3Key);
+        log.info("[SSE] New subscription for jobId={}", jobId);
 
         // 연결 확인 이벤트 전송
-        sendToEmitter(emitter, "connection", Map.of("status", "connected", "s3Key", s3Key));
+        sendToEmitter(emitter, "connection", Map.of("status", "connected", "jobId", jobId));
 
         // 완료/타임아웃 시 자동 제거
-        emitter.onCompletion(() -> remove(s3Key, emitter));
-        emitter.onTimeout(() -> remove(s3Key, emitter));
-        emitter.onError(e -> remove(s3Key, emitter));
+        emitter.onCompletion(() -> remove(jobId, emitter));
+        emitter.onTimeout(() -> remove(jobId, emitter));
+        emitter.onError(e -> remove(jobId, emitter));
 
         return emitter;
     }
 
     /**
-     * 특정 s3Key에 이벤트 전송
+     * 특정 jobId에 이벤트 전송
      */
-    public void send(String s3Key, String eventType, Object data) {
-        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.get(s3Key);
+    public void send(String jobId, String eventType, Object data) {
+        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.get(jobId);
 
         if (emitters == null || emitters.isEmpty()) {
-            log.warn("[SSE] No subscribers for s3Key={}", s3Key);
+            log.warn("[SSE] No subscribers for jobId={}", jobId);
             return;
         }
 
-        log.info("[SSE] Sending {} event to {} subscribers for s3Key={}",
-                eventType, emitters.size(), s3Key);
+        log.info("[SSE] Sending {} event to {} subscribers for jobId={}",
+                eventType, emitters.size(), jobId);
 
         emitters.forEach(emitter -> sendToEmitter(emitter, eventType, data));
     }
@@ -73,14 +73,14 @@ public class SseEmitterManager {
     /**
      * 구독 제거
      */
-    private void remove(String s3Key, SseEmitter emitter) {
-        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.get(s3Key);
+    private void remove(String jobId, SseEmitter emitter) {
+        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.get(jobId);
         if (emitters != null) {
             emitters.remove(emitter);
             if (emitters.isEmpty()) {
-                subscribers.remove(s3Key);
+                subscribers.remove(jobId);
             }
         }
-        log.info("[SSE] Removed subscription for s3Key={}", s3Key);
+        log.info("[SSE] Removed subscription for jobId={}", jobId);
     }
 }
