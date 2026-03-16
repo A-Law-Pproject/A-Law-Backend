@@ -20,10 +20,10 @@ public class ExplanationService {
   public EasyExplanationResponse getEasyExplanation(EasyExplanationRequest request) {
     log.info("쉬운 말 요약 요청 - contractId: {}", request.contractId());
 
-    EasyExplanationResponse response = aiClient.getEasyExplanation(request.term());
+    EasyExplanationResponse response = aiClient.getEasyExplanation(request.sentence());
 
     if (request.contractId() != null) {
-      saveExplanation(request.contractId(), request.originalSentence(), response.easyExplanation());
+      saveExplanation(request.contractId(), request.sentence(), response.easyExplanation());
     }
 
     return response;

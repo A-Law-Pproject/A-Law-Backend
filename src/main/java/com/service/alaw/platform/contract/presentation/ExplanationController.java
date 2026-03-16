@@ -30,7 +30,7 @@ public class ExplanationController implements ExplanationSpec {
     log.info(
         "쉬운 말 요약 요청 - contractId: {}, 원문 길이: {}",
         request.contractId(),
-        request.originalSentence().length());
+        request.sentence().length());
 
     EasyExplanationResponse response = explanationService.getEasyExplanation(request);
     return ApiResponse.success(response);

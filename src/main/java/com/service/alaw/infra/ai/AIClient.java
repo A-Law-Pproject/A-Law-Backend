@@ -31,7 +31,7 @@ public class AIClient {
   }
 
   public EasyExplanationResponse getEasyExplanation(String term) {
-    log.info("FastAPI 쉬운 말 요약 요청 - term: {}, 원문 길이: {}", term);
+    log.info("FastAPI 쉬운 말 요약 요청 - term: {}, 원문 길이: {}", term, term.length());
 
     try {
       EasyExplanationResponse response =
