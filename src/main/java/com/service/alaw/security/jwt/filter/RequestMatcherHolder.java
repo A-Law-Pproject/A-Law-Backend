@@ -73,7 +73,8 @@ public class RequestMatcherHolder {
             new RequestInfo(GET, "/resources/**", null),
             new RequestInfo(GET, "/favicon.ico", null),
             new RequestInfo(GET, "/apple-touch-icon.png", null),
-            new RequestInfo(GET, "/ocr-overlay.html", null)
+            new RequestInfo(GET, "/ocr-overlay.html", null),
+            new RequestInfo(GET, "/sse-test.html", null)
 
     );
 
