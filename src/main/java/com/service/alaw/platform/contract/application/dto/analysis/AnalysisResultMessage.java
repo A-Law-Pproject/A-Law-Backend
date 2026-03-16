@@ -32,7 +32,10 @@ public record AnalysisResultMessage(
     public record SummaryDto(
             String title,
             String summaryText,
-            List<String> keyTerms
+            List<String> keyTerms,
+            List<String> parties,
+            String duration,
+            List<String> importantDates
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -51,6 +54,7 @@ public record AnalysisResultMessage(
             String clauseContent,
             String riskLevel,
             String recommendation,
-            String legalReference
+            String legalReference,
+            String reasoningSummary
     ) {}
 }

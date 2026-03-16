@@ -123,6 +123,7 @@ public class ContractAnalysisDocument {
         private String riskLevel;
         private String recommendation;
         private String legalReference;
+        private String reasoningSummary;
 
         public static ClauseResult from(AnalysisResultMessage.ClauseDto dto) {
             return ClauseResult.builder()
@@ -131,6 +132,7 @@ public class ContractAnalysisDocument {
                     .riskLevel(dto.riskLevel())
                     .recommendation(dto.recommendation())
                     .legalReference(dto.legalReference())
+                    .reasoningSummary(dto.reasoningSummary())
                     .build();
         }
     }

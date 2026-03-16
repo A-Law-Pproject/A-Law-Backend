@@ -7,16 +7,16 @@ import java.io.Serializable;
 
 @Builder
 public record ContractAnalysisMessage(
-        @JsonProperty("job_id")
+        @JsonProperty("jobId")
         String jobId,
 
-        @JsonProperty("contract_id")
+        @JsonProperty("contractId")
         Long contractId,
 
-        @JsonProperty("s3_key")
+        @JsonProperty("s3Key")
         String s3Key,
 
-        @JsonProperty("user_id")
+        @JsonProperty("userId")
         Long userId
 ) implements Serializable {
 
