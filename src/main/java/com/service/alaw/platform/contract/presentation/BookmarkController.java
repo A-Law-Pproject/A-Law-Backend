@@ -6,32 +6,34 @@ import com.service.alaw.platform.contract.application.service.ContractCommandSer
 import com.service.alaw.platform.contract.presentation.swagger.BookmarkSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/contracts")
 @RequiredArgsConstructor
 public class BookmarkController implements BookmarkSpec {
 
-    private final ContractCommandService contractCommandService;
+  private final ContractCommandService contractCommandService;
 
-    @Override
-    @PatchMapping("/{id}/bookmark")
-    public ResponseEntity<ApiResponse<Void>> bookmarkContract(
-            @PathVariable("id") Long contractId,
-            @CurrentUserId Long userId) {
+  @Override
+  @PatchMapping("/{id}/bookmark")
+  public ResponseEntity<ApiResponse<Void>> bookmarkContract(
+      @PathVariable("id") Long contractId, @CurrentUserId Long userId) {
 
-        contractCommandService.toggleBookmark(contractId, userId, true);
-        return ApiResponse.updated();
-    }
+    contractCommandService.toggleBookmark(contractId, userId, true);
+    return ApiResponse.updated();
+  }
 
-    @Override
-    @DeleteMapping("/{id}/bookmark")
-    public ResponseEntity<ApiResponse<Void>> unbookmarkContract(
-            @PathVariable("id") Long contractId,
-            @CurrentUserId Long userId) {
+  @Override
+  @DeleteMapping("/{id}/bookmark")
+  public ResponseEntity<ApiResponse<Void>> unbookmarkContract(
+      @PathVariable("id") Long contractId, @CurrentUserId Long userId) {
 
-        contractCommandService.toggleBookmark(contractId, userId, false);
-        return ApiResponse.deleted();
-    }
+    contractCommandService.toggleBookmark(contractId, userId, false);
+    return ApiResponse.deleted();
+  }
 }

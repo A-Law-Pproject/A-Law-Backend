@@ -2,9 +2,9 @@ name: A-LAW CI 파이프라인
 
 on:
   push:
-    branches: ["main", "develop", "qa/release-v0.0.1"]
+    branches: ["main", "develop", "qa/release-v0.0.2"]
   pull_request:
-    branches: ["main", "develop", "qa/release-v0.0.1"]
+    branches: ["main", "develop", "qa/release-v0.0.2"]
 
 jobs:
   # 1. 테스트 단계 (코드 품질 검증)

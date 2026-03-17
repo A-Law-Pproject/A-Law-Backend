@@ -1,9 +1,6 @@
 package com.service.alaw.infra.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -15,18 +12,23 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-// RabbitMQConfig.java
 @Configuration
 public class RabbitMQConfig {
 
     @Value("${app.rabbitmq.exchange}")
-    private String exchangeName;
+    private String exchangeName;           // contract-analysis-ex
 
     @Value("${app.rabbitmq.queue}")
-    private String queueName;
+    private String queueName;             // contract-analysis-queue
 
     @Value("${app.rabbitmq.routing-key}")
-    private String routingKey;
+    private String routingKey;            // contract.analyze
+
+    @Value("${app.rabbitmq.ai-result-queue}")
+    private String aiResultQueueName;     // ai.result.queue
+
+    @Value("${app.rabbitmq.result-queue}")
+    private String resultQueueName;       // contract-analysis-result-queue
 
     @Bean
     public MessageConverter messageConverter() {
@@ -40,52 +42,79 @@ public class RabbitMQConfig {
         return rabbitTemplate;
     }
 
-    // Exchange: Direct (특정 큐로 라우팅)
+    // ─── Spring → FastAPI ────────────────────────────────────────────────────
+
+    /** 계약서 분석 요청 Exchange */
     @Bean
     public DirectExchange contractExchange() {
         return new DirectExchange(exchangeName, true, false);
-        // durable=true: 브로커 재시작해도 존재 유지
     }
 
-    // Queue: Durable + 재시도 정책
+    /** 계약서 분석 요청 Queue (DLQ 연결 + TTL 24h) */
     @Bean
     public Queue contractQueue() {
         Map<String, Object> args = new HashMap<>();
-        // 재시도 실패 시 DLQ로 이동
         args.put("x-dead-letter-exchange", exchangeName + ".dlx");
         args.put("x-dead-letter-routing-key", routingKey + ".failed");
-        // 메시지 최대 유지 시간: 24시간
         args.put("x-message-ttl", 86400000);
-
         return new Queue(queueName, true, false, false, args);
-        // durable=true, exclusive=false, autoDelete=false
     }
 
-    // Dead Letter Queue — 반복 실패 시 메시지 보관
     @Bean
-    public Queue deadLetterQueue() {
-        return new Queue(queueName + ".dlq", true);
+    public Binding contractBinding() {
+        return BindingBuilder.bind(contractQueue()).to(contractExchange()).with(routingKey);
     }
 
-    // Dead Letter Exchange
+    @Bean
+    public Binding dlqBinding() {
+        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(routingKey + ".failed");
+    }
+
+    // ─── FastAPI → Spring ────────────────────────────────────────────────────
+
+    /** FastAPI가 분석 결과를 publish하는 Exchange */
+    @Bean
+    public DirectExchange aiResultExchange() {
+        return new DirectExchange("contract.analysis.result", true, false);
+    }
+
+    /** Spring이 분석 결과를 consume하는 Queue (SSEListener가 구독) */
+    @Bean
+    public Queue aiResultQueue() {
+        return new Queue(aiResultQueueName, true);  // ai.result.queue
+    }
+
+    @Bean
+    public Binding aiResultBinding() {
+        return BindingBuilder.bind(aiResultQueue()).to(aiResultExchange()).with("ai.result");
+    }
+
+    /** Job 상태 추적 전용 Queue (ContractAnalysisResultConsumer 구독) */
+    @Bean
+    public Queue contractResultQueue() {
+        return new Queue(resultQueueName, true);
+    }
+
+    @Bean
+    public Binding contractResultBinding() {
+        return BindingBuilder.bind(contractResultQueue()).to(aiResultExchange()).with("ai.result");
+    }
+
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange(exchangeName + ".dlx", true, false);
     }
 
     @Bean
-    public Binding contractBinding() {
-        return BindingBuilder
-                .bind(contractQueue())
-                .to(contractExchange())
-                .with(routingKey);
+    public Queue deadLetterQueue() {
+        return QueueBuilder.durable(queueName + ".dlx").build();
     }
 
     @Bean
-    public Binding dlqBinding() {
-        return BindingBuilder
-                .bind(deadLetterQueue())
-                .to(deadLetterExchange())
+    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(deadLetterQueue)
+                .to(deadLetterExchange)
                 .with(routingKey + ".failed");
     }
+
 }

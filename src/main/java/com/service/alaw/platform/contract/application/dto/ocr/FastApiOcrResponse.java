@@ -4,30 +4,45 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
+import java.util.Map;
 
-@Schema(description = "OCR 결과 응답")
+@Schema(description = "FastAPI OCR 응답")
 public record FastApiOcrResponse(
-        @Schema(description = "처리 성공 여부", example = "true")
         @JsonProperty("success")
-        Boolean success,
+        boolean success,
 
-        @Schema(description = "처리 시간 (초)", example = "2.5")
         @JsonProperty("processing_time")
-        Double processingTime,
+        double processingTime,
 
-        @Schema(description = "이미지 원본 너비 (픽셀)", example = "1200")
+        @Schema(description = "S3 이미지 URL (Spring에서 주입)")
+        @JsonProperty("image_url")
+        String imageUrl,
+
         @JsonProperty("image_width")
-        Integer imageWidth,
+        int imageWidth,
 
-        @Schema(description = "이미지 원본 높이 (픽셀)", example = "1700")
         @JsonProperty("image_height")
-        Integer imageHeight,
+        int imageHeight,
 
-        @Schema(description = "전체 텍스트 (순서대로 결합)", example = "임대차 계약서...")
         @JsonProperty("full_text")
         String fullText,
 
-        @Schema(description = "텍스트 블록 목록 (좌표는 % 단위)")
-        @JsonProperty("blocks")
-        List<OcrBlock> blocks
+        @JsonProperty("markdown")
+        String markdown,
+
+        @JsonProperty("contract_data")
+        Map<String, Object> contractData,
+
+        @JsonProperty("validation")
+        Map<String, Object> validation,
+
+        @Schema(description = "단어별 OCR 결과 (좌표 포함)")
+        @JsonProperty("words")
+        List<OcrBlock> words,
+
+        @JsonProperty("warnings")
+        List<String> warnings,
+
+        @JsonProperty("error")
+        String error
 ) {}

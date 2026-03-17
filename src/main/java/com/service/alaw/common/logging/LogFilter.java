@@ -28,6 +28,11 @@ public class LogFilter extends OncePerRequestFilter {
     private final HttpLogUtil httpUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/actuator/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         /// 로그 찍기

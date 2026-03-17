@@ -32,7 +32,7 @@ public class OCRClient {
 
         try {
             FastApiOcrResponse response = webClient.post()
-                    .uri("/api/contracts/ocr")
+                    .uri("/ai/contracts/ocr")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of("s3_key", s3Key))
                     .retrieve()
@@ -46,10 +46,10 @@ public class OCRClient {
                     .bodyToMono(FastApiOcrResponse.class)
                     .block(Duration.ofSeconds(30));
 
-            log.info("FastAPI OCR 응답 - 블록 수: {}, 이미지 크기: {}x{}, 처리시간: {}s",
-                    response.blocks() != null ? response.blocks().size() : 0,
-                    response.imageWidth(), response.imageHeight(),
-                    response.processingTime());
+            log.info("FastAPI OCR 응답 수신 - success: {}, 단어 수: {}",
+                    response.success(),
+                    response.words() != null ? response.words().size() : 0);
+
 
             return response;
 
