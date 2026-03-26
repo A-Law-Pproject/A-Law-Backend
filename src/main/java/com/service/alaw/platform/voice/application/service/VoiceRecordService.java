@@ -53,16 +53,29 @@ public class VoiceRecordService {
 
         VoiceRecord saved = voiceRecordRepository.save(voiceRecord);
 
-        voiceRecordPublisher.publish(new VoiceAnalysisMessage(
-                saved.getVoiceRecordId(),
-                contractId,
-                userId,
-                jobId,
-                s3Key,
-                contract.getRawText()
-        ));
-
         log.info("[VoiceRecord] 업로드 완료 - voiceRecordId={}, jobId={}", saved.getVoiceRecordId(), jobId);
         return VoiceRecordResponse.from(saved);
+    }
+
+    @Transactional
+    public void analyze(Long voiceRecordId, Long userId) {
+        VoiceRecord voiceRecord = voiceRecordRepository.findById(voiceRecordId)
+                .filter(v -> v.getUser().getUserId().equals(userId))
+                .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
+
+        String newJobId = UUID.randomUUID().toString();
+        voiceRecord.startAnalysis(newJobId);
+        voiceRecordRepository.save(voiceRecord);
+
+        voiceRecordPublisher.publish(new VoiceAnalysisMessage(
+                voiceRecord.getVoiceRecordId(),
+                voiceRecord.getContract().getContractId(),
+                userId,
+                newJobId,
+                voiceRecord.getS3Key(),
+                voiceRecord.getContract().getRawText()
+        ));
+
+        log.info("[VoiceRecord] 분석 요청 - voiceRecordId={}, jobId={}", voiceRecordId, newJobId);
     }
 }

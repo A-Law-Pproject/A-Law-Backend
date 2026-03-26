@@ -77,6 +77,11 @@ public class VoiceRecord extends BaseTimeEntity {
         this.status = VoiceRecordStatus.PENDING;
     }
 
+    public void startAnalysis(String jobId) {
+        this.jobId = jobId;
+        this.status = VoiceRecordStatus.PENDING;
+    }
+
     public void linkAnalysis(String analysisId) {
         this.analysisId = analysisId;
     }

@@ -30,6 +30,16 @@ public class VoiceRecordController implements VoiceRecordSpec {
     );
 
     @Override
+    @PostMapping("/voice-records/{voiceRecordId}/analyze")
+    public ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+            @PathVariable Long voiceRecordId,
+            @CurrentUserId Long userId) {
+
+        voiceRecordService.analyze(voiceRecordId, userId);
+        return ApiResponse.success();
+    }
+
+    @Override
     @PostMapping(value = "/voice-records", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<VoiceRecordResponse>> saveVoiceRecord(
             @RequestParam Long contractId,
