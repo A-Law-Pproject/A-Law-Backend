@@ -31,7 +31,7 @@ public class AIClient {
   }
 
   public EasyExplanationResponse getEasyExplanation(String term) {
-    log.info("FastAPI 쉬운 말 요약 요청 - term: {}, 원문 길이: {}", term, term.length());
+    log.info("FastAPI 쉬운 말 요약 요청 - 원문 길이: {}", term.length());
 
     try {
       EasyExplanationResponse response =
@@ -39,7 +39,7 @@ public class AIClient {
               .post()
               .uri("/ai/contracts/explain/term")
               .contentType(MediaType.APPLICATION_JSON)
-              .bodyValue(Map.of("term", term))
+              .bodyValue(Map.of("sentence", term))
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
