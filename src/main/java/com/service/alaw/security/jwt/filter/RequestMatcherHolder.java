@@ -37,6 +37,9 @@ public class RequestMatcherHolder {
             new RequestInfo(PATCH, "/api/v1/users", UserRole.User),
             new RequestInfo(DELETE, "/api/v1/users", UserRole.User),
 
+            // contracts - SSE 스트림은 async dispatch 시 Security 컨텍스트가 유실되므로 permitAll
+            new RequestInfo(GET, "/api/v1/contracts/analysis/*/stream", null),
+
             // contracts
             new RequestInfo(POST, "/api/v1/contracts/ocr", UserRole.User),
             new RequestInfo(GET, "/api/v1/contracts/**", UserRole.User),

@@ -12,6 +12,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +88,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
         log.debug("No static resource: {}", ex.getResourcePath());
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public ResponseEntity<Void> handleAsyncTimeout(AsyncRequestTimeoutException ex) {
+        // SSE 연결 타임아웃 - onTimeout 콜백에서 이미 정리되므로 무시
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(Exception.class)
