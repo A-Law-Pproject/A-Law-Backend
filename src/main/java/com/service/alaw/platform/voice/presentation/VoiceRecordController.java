@@ -11,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class VoiceRecordController implements VoiceRecordSpec {
 
@@ -29,28 +29,73 @@ public class VoiceRecordController implements VoiceRecordSpec {
             "audio/m4a"
     );
 
+    // POST /api/v1/contracts/{contractId}/voice-records — 계약서에 바로 연결하여 저장
     @Override
-    @PostMapping("/voice-records/{voiceRecordId}/analyze")
-    public ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
-            @PathVariable Long voiceRecordId,
-            @CurrentUserId Long userId) {
-
-        voiceRecordService.analyze(voiceRecordId, userId);
-        return ApiResponse.success();
-    }
-
-    @Override
-    @PostMapping(value = "/voice-records", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/api/v1/contracts/{contractId}/voice-records", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<VoiceRecordResponse>> saveVoiceRecord(
-            @RequestParam Long contractId,
+            @PathVariable Long contractId,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam("audio") MultipartFile file,
             @CurrentUserId Long userId) {
 
         validateAudioFile(file);
-
         VoiceRecordResponse response = voiceRecordService.save(contractId, userId, title, file);
         return ApiResponse.created(response);
+    }
+
+    // POST /api/v1/voice-records — 계약서 연결 없이 저장
+    @Override
+    @PostMapping(value = "/api/v1/voice-records", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<VoiceRecordResponse>> saveVoiceRecordWithoutContract(
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam("audio") MultipartFile file,
+            @CurrentUserId Long userId) {
+
+        validateAudioFile(file);
+        VoiceRecordResponse response = voiceRecordService.saveWithoutContract(userId, title, file);
+        return ApiResponse.created(response);
+    }
+
+    // GET /api/v1/voice-records — 전체 녹음 목록 조회
+    @Override
+    @GetMapping("/api/v1/voice-records")
+    public ResponseEntity<ApiResponse<List<VoiceRecordResponse>>> getVoiceRecords(
+            @CurrentUserId Long userId) {
+
+        return ApiResponse.retrieved(voiceRecordService.findAll(userId));
+    }
+
+    // GET /api/v1/contracts/{contractId}/voice-record — 특정 계약서의 녹음 조회
+    @Override
+    @GetMapping("/api/v1/contracts/{contractId}/voice-record")
+    public ResponseEntity<ApiResponse<VoiceRecordResponse>> getVoiceRecordByContract(
+            @PathVariable Long contractId,
+            @CurrentUserId Long userId) {
+
+        return ApiResponse.retrieved(voiceRecordService.findByContract(contractId, userId));
+    }
+
+    // DELETE /api/v1/voice-records/{voiceRecordId} — 녹음 삭제
+    @Override
+    @DeleteMapping("/api/v1/voice-records/{voiceRecordId}")
+    public ResponseEntity<ApiResponse<Void>> deleteVoiceRecord(
+            @PathVariable Long voiceRecordId,
+            @CurrentUserId Long userId) {
+
+        voiceRecordService.delete(voiceRecordId, userId);
+        return ApiResponse.deleted();
+    }
+
+    // POST /api/v1/voice-records/{voiceRecordId}/analyze — 분석 시작
+    @Override
+    @PostMapping("/api/v1/voice-records/{voiceRecordId}/analyze")
+    public ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+            @PathVariable Long voiceRecordId,
+            @RequestParam(value = "contractId", required = false) Long contractId,
+            @CurrentUserId Long userId) {
+
+        voiceRecordService.analyze(voiceRecordId, userId, contractId);
+        return ApiResponse.success();
     }
 
     private void validateAudioFile(MultipartFile file) {

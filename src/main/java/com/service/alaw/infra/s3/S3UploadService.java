@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -49,5 +50,12 @@ public class S3UploadService {
 
     public String getFileUrl(String s3Key) {
         return String.format("https://%s.s3.amazonaws.com/%s", bucket, s3Key);
+    }
+
+    public void delete(String s3Key) {
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(s3Key)
+                .build());
     }
 }

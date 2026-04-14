@@ -21,7 +21,7 @@ public class VoiceRecord extends BaseTimeEntity {
     private Long voiceRecordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id", nullable = true)
     private Contract contract;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -75,6 +75,10 @@ public class VoiceRecord extends BaseTimeEntity {
         this.s3Key = s3Key;
         this.fileUrl = fileUrl;
         this.status = VoiceRecordStatus.PENDING;
+    }
+
+    public void linkContract(Contract contract) {
+        this.contract = contract;
     }
 
     public void startAnalysis(String jobId) {
