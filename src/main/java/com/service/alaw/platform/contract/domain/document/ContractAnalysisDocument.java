@@ -31,6 +31,7 @@ public class ContractAnalysisDocument {
     @Field("s3_key")
     private String s3Key;
 
+    @Indexed
     @Field("job_id")
     private String jobId;
 
@@ -65,6 +66,9 @@ public class ContractAnalysisDocument {
     @Field("clause_results")
     private List<ClauseResult> clauseResults;
 
+    @Field("claude_results")
+    private List<ClauseResult> claudeResults;
+
     @Field("processing_time_ms")
     private Integer processingTimeMs;
 
@@ -88,12 +92,17 @@ public class ContractAnalysisDocument {
                 .cautionCount(r != null ? r.cautionCount() : null)
                 .safetyCount(r != null ? r.safetyCount() : null)
                 .riskPercentage(r != null ? r.riskPercentage() : null)
-                .clauseResults(r != null ? r.clauseResults().stream().map(ClauseResult::from).toList() : null)
+                .clauseResults(r != null && r.clauseResults() != null
+                        ? r.clauseResults().stream().map(ClauseResult::from).toList() : null)
                 .processingTimeMs(message.processingTimeMs())
                 .build();
     }
 
     /** s3Key 기반 생성 (s3Key로 contractId를 특정할 수 없는 경우) */
+    public List<ClauseResult> getReplayClauseResults() {
+        return clauseResults != null ? clauseResults : claudeResults;
+    }
+
     public static ContractAnalysisDocument fromS3Key(String s3Key, AnalysisResultMessage message) {
         ContractAnalysisDocument doc = from(message);
         return ContractAnalysisDocument.builder()

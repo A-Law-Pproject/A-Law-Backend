@@ -90,7 +90,7 @@ public class ContractService {
       publisher.publish(message);
       log.info("계약서 분석 작업 큐에 전송 완료 - jobId: {}, s3Key: {}, contractId: {}", jobId, s3Key, savedContract.getContractId());
 
-      // 5. imageUrl을 포함한 최종 응답 반환
+      // 5. imageUrl + contractId + jobId를 포함한 최종 응답 반환
       return new FastApiOcrResponse(
               ocrResponse.success(),
               ocrResponse.processingTime(),
@@ -103,7 +103,9 @@ public class ContractService {
               ocrResponse.validation(),
               ocrResponse.words(),
               ocrResponse.warnings(),
-              ocrResponse.error()
+              ocrResponse.error(),
+              savedContract.getContractId(),
+              jobId
       );
 
     } catch (FastApiException e) {

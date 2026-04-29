@@ -44,5 +44,14 @@ public record FastApiOcrResponse(
         List<String> warnings,
 
         @JsonProperty("error")
-        String error
+        String error,
+
+        // Spring에서 주입 (FastAPI 응답에는 없는 필드)
+        @Schema(description = "생성된 계약서 ID")
+        @JsonProperty("contract_id")
+        Long contractId,
+
+        @Schema(description = "분석 작업 ID (SSE 구독에 사용)")
+        @JsonProperty("job_id")
+        String jobId
 ) {}

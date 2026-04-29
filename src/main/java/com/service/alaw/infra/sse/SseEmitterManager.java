@@ -56,6 +56,10 @@ public class SseEmitterManager {
         emitters.forEach(emitter -> sendToEmitter(emitter, eventType, data));
     }
 
+    public void send(SseEmitter emitter, String eventType, Object data) {
+        sendToEmitter(emitter, eventType, data);
+    }
+
     /**
      * 개별 Emitter에 이벤트 전송
      */
@@ -68,6 +72,20 @@ public class SseEmitterManager {
             log.error("[SSE] Error sending event: {}", e.getMessage());
             emitter.completeWithError(e);
         }
+    }
+
+    /**
+     * 특정 jobId의 모든 emitter를 정상 종료 (분석 완료 후 호출)
+     */
+    public void complete(String jobId) {
+        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.remove(jobId);
+        if (emitters == null) return;
+        emitters.forEach(emitter -> {
+            try {
+                emitter.complete();
+            } catch (Exception ignored) {}
+        });
+        log.info("[SSE] Completed all emitters for jobId={}", jobId);
     }
 
     /**
