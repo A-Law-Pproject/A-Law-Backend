@@ -56,11 +56,9 @@ public record AnalysisResultMessage(
             String clauseTitle,
             String clauseContent,
             String riskLevel,
-            String recommendation,
-            String legalReference,
+            @JsonProperty("legalReference")       String legalReference,
             String reasoningSummary,
-            @JsonProperty("category")   String category,
-            @JsonProperty("score")      int score,
-            @JsonProperty("relatedLaw") String relatedLaw
+            @JsonProperty("category")         String category,
+            @JsonProperty("score")            int score
     ) {}
 }

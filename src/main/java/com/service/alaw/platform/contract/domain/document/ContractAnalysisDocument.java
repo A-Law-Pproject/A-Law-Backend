@@ -122,7 +122,6 @@ public class ContractAnalysisDocument {
         private String clauseTitle;
         private String clauseContent;
         private String riskLevel;
-        private String recommendation;
         private String legalReference;
         private String reasoningSummary;
 
@@ -131,7 +130,6 @@ public class ContractAnalysisDocument {
                     .clauseTitle(dto.clauseTitle())
                     .clauseContent(dto.clauseContent())
                     .riskLevel(dto.riskLevel())
-                    .recommendation(dto.recommendation())
                     .legalReference(dto.legalReference())
                     .reasoningSummary(dto.reasoningSummary())
                     .build();
