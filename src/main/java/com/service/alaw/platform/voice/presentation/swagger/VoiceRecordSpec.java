@@ -2,6 +2,7 @@ package com.service.alaw.platform.voice.presentation.swagger;
 
 import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
+import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeStartResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +20,8 @@ public interface VoiceRecordSpec {
 
     @Operation(
             summary = "음성 녹음 저장",
-            description = "계약서에 음성 메모를 저장합니다. 기존 녹음이 있으면 덮어씁니다. 지원 형식: MP3, WAV, MP4, WEBM, M4A"
+            description = "음성 파일을 저장합니다. contractId 가 없으면 voice-only 레코드로 저장됩니다. "
+                    + "지원 형식: MP3, WAV, MP4, WEBM, M4A"
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -39,7 +41,7 @@ public interface VoiceRecordSpec {
             )
     })
     ResponseEntity<ApiResponse<VoiceRecordResponse>> saveVoiceRecord(
-            @Parameter(description = "계약서 ID", required = true) @RequestParam Long contractId,
+            @Parameter(description = "계약서 ID (없으면 voice-only 모드)") @RequestParam(required = false) Long contractId,
             @Parameter(description = "녹음 제목 (선택)") @RequestParam(value = "title", required = false) String title,
             @Parameter(description = "음성 파일 (지원 형식: MP3, WAV, MP4, WEBM, M4A)", required = true,
                     content = @Content(mediaType = "multipart/form-data"))
@@ -48,13 +50,15 @@ public interface VoiceRecordSpec {
     );
 
     @Operation(
-            summary = "음성 팩트체크 분석 시작",
-            description = "저장된 음성 녹음의 팩트체크 분석을 시작합니다."
+            summary = "음성 분석 시작",
+            description = "저장된 음성 레코드의 분석을 시작합니다. "
+                    + "계약서 연계 레코드는 RabbitMQ 비동기 팩트체크, "
+                    + "voice-only 레코드는 FastAPI 동기 분석 결과를 즉시 반환합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "분석 요청 성공 (백그라운드에서 처리 시작)"
+                    description = "분석 성공 또는 비동기 요청 시작"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
@@ -62,7 +66,7 @@ public interface VoiceRecordSpec {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))
             )
     })
-    ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+    ResponseEntity<ApiResponse<VoiceAnalyzeStartResponse>> analyzeVoiceRecord(
             @Parameter(description = "음성 녹음 ID", required = true) @PathVariable Long voiceRecordId,
             @Parameter(hidden = true) @CurrentUserId Long userId
     );

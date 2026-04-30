@@ -20,8 +20,12 @@ public class VoiceRecord extends BaseTimeEntity {
     @Column(name = "voice_record_id")
     private Long voiceRecordId;
 
+    /**
+     * 계약서 연계 팩트체크 시에만 값을 가진다.
+     * voice-only(계약서 없는 단독 분석) 시에는 null 이다.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id", nullable = true)
     private Contract contract;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -58,9 +62,22 @@ public class VoiceRecord extends BaseTimeEntity {
         this.status = VoiceRecordStatus.PENDING;
     }
 
+    /** 계약서 연계 음성 레코드 생성 팩토리 메서드. */
     public static VoiceRecord of(Contract contract, User user, String title, String jobId, String s3Key, String fileUrl) {
         return VoiceRecord.builder()
                 .contract(contract)
+                .user(user)
+                .title(title)
+                .jobId(jobId)
+                .s3Key(s3Key)
+                .fileUrl(fileUrl)
+                .build();
+    }
+
+    /** voice-only(계약서 없음) 음성 레코드 생성 팩토리 메서드. */
+    public static VoiceRecord ofVoiceOnly(User user, String title, String jobId, String s3Key, String fileUrl) {
+        return VoiceRecord.builder()
+                .contract(null)
                 .user(user)
                 .title(title)
                 .jobId(jobId)
@@ -92,5 +109,10 @@ public class VoiceRecord extends BaseTimeEntity {
 
     public void fail() {
         this.status = VoiceRecordStatus.FAILED;
+    }
+
+    /** 계약서 연계 여부 확인. */
+    public boolean hasContract() {
+        return this.contract != null;
     }
 }

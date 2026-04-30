@@ -50,3 +50,5 @@ src/main/resources/application.yml
 /AGENTS.md
 /CLAUDE.md
 /src/main/resources/.env
+/src/main/resources/static/sse-test.html
+*/test/

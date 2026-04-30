@@ -2,6 +2,7 @@ package com.service.alaw.platform.voice.presentation;
 
 import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
+import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeStartResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
 import com.service.alaw.platform.voice.application.service.VoiceRecordService;
 import com.service.alaw.platform.voice.presentation.swagger.VoiceRecordSpec;
@@ -29,20 +30,29 @@ public class VoiceRecordController implements VoiceRecordSpec {
             "audio/m4a"
     );
 
+    /**
+     * 음성 분석 트리거.
+     * - 계약서 연계 레코드: RabbitMQ 비동기 팩트체크 → data=null 로 200 반환
+     * - voice-only 레코드: FastAPI 동기 분석 → 200 OK + VoiceAnalysisResponse 반환
+     */
     @Override
     @PostMapping("/voice-records/{voiceRecordId}/analyze")
-    public ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+    public ResponseEntity<ApiResponse<VoiceAnalyzeStartResponse>> analyzeVoiceRecord(
             @PathVariable Long voiceRecordId,
             @CurrentUserId Long userId) {
 
-        voiceRecordService.analyze(voiceRecordId, userId);
-        return ApiResponse.success();
+        VoiceAnalyzeStartResponse result = voiceRecordService.analyze(voiceRecordId, userId);
+        return ApiResponse.success(result);
     }
 
+    /**
+     * 음성 파일 업로드.
+     * contractId 가 null 이면 voice-only 레코드로 저장한다.
+     */
     @Override
     @PostMapping(value = "/voice-records", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<VoiceRecordResponse>> saveVoiceRecord(
-            @RequestParam Long contractId,
+            @RequestParam(required = false) Long contractId,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam("audio") MultipartFile file,
             @CurrentUserId Long userId) {
