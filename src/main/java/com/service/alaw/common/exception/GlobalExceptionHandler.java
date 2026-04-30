@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.*;
 import com.service.alaw.common.exception.code.BaseCode;
 import com.service.alaw.common.exception.code.CommonErrorCode;
 import com.service.alaw.common.response.ApiResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Value("${spring.servlet.multipart.max-file-size:1MB}")
+    private String maxFileSize;
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(NotFoundException ex) {
@@ -81,6 +86,12 @@ public class GlobalExceptionHandler {
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown";
         String message = "Invalid value for parameter: " + ex.getName() + " (Expected: " + requiredType + ")";
         return build(CommonErrorCode.BAD_REQUEST, message, BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        String message = String.format("업로드 가능한 최대 크기(%s)를 초과했습니다", maxFileSize);
+        return build(CommonErrorCode.PAYLOAD_TOO_LARGE, message, PAYLOAD_TOO_LARGE, ex);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

@@ -14,6 +14,7 @@ public enum CommonErrorCode implements BaseCode {
     NOT_FOUND("404", "리소스를 찾을 수 없음"),
     METHOD_NOT_ALLOWED("405", "허용되지 않은 HTTP 메서드"),
     CONFLICT("409", "리소스 충돌"),
+    PAYLOAD_TOO_LARGE("413", "업로드 가능한 파일 크기를 초과했습니다"),
     VALIDATION_ERROR("422", "입력값 검증 실패"),
     TOO_MANY_REQUESTS("429", "요청 한도 초과"),
 
