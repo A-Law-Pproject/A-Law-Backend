@@ -103,7 +103,9 @@ public class ContractService {
               ocrResponse.validation(),
               ocrResponse.words(),
               ocrResponse.warnings(),
-              ocrResponse.error()
+              ocrResponse.error(),
+              savedContract.getContractId(),
+              jobId
       );
 
     } catch (FastApiException e) {

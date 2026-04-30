@@ -1,5 +1,5 @@
 HELP.md
-.gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -44,3 +44,9 @@ out/
 
 # application.yml
 src/main/resources/application.yml
+/.gradle-user-home/
+.claude/
+/.exec-plans/
+/AGENTS.md
+/CLAUDE.md
+/src/main/resources/.env
