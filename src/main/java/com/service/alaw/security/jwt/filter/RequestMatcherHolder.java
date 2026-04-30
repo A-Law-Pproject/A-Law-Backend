@@ -37,6 +37,10 @@ public class RequestMatcherHolder {
             new RequestInfo(PATCH, "/api/v1/users", UserRole.User),
             new RequestInfo(DELETE, "/api/v1/users", UserRole.User),
 
+            // SSE 스트림 — async dispatch 시 SecurityContext 재검증을 피하기 위해 permitAll
+            new RequestInfo(GET, "/api/v1/contracts/analysis/*/stream", null),
+            new RequestInfo(GET, "/api/v1/voice-records/analysis/*/stream", null),
+
             // contracts
             new RequestInfo(POST, "/api/v1/contracts/ocr", UserRole.User),
             new RequestInfo(GET, "/api/v1/contracts/**", UserRole.User),
@@ -44,6 +48,11 @@ public class RequestMatcherHolder {
             new RequestInfo(PUT, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(DELETE, "/api/v1/contracts/**", UserRole.User),
             new RequestInfo(PATCH, "/api/v1/contracts/**", UserRole.User),
+
+            // voice-records
+            new RequestInfo(POST, "/api/v1/voice-records", UserRole.User),
+            new RequestInfo(POST, "/api/v1/voice-records/**", UserRole.User),
+            new RequestInfo(GET, "/api/v1/voice-records/**", UserRole.User),
 
             // chatbot
             new RequestInfo(POST, "/api/v1/chat", UserRole.User),
