@@ -23,7 +23,8 @@ public interface ContractSseSpec {
                     3. `analysis_result` - 리스크 분석 (totalClauses, riskCount, cautionCount, safetyCount, clauseResults)
                     4. `analysis_complete` - 완료 신호 (status, jobId, processingTimeMs)
 
-                    실패 시: `error` 이벤트 수신
+                    구독 시점에 분석이 이미 완료된 경우, 위 이벤트들을 MongoDB에서 즉시 replay 한 뒤 스트림을 종료합니다.
+                    실패한 경우: `error` + `analysis_complete` (status=FAILED) 이벤트 수신
                     """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

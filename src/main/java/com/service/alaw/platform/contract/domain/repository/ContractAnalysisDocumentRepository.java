@@ -11,5 +11,7 @@ public interface ContractAnalysisDocumentRepository
 
   Optional<ContractAnalysisDocument> findByContractId(Long contractId);
 
+  Optional<ContractAnalysisDocument> findByJobId(String jobId);
+
   Optional<ContractAnalysisDocument> findByS3Key(String s3Key);
 }

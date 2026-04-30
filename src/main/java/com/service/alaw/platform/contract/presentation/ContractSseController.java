@@ -1,6 +1,7 @@
 package com.service.alaw.platform.contract.presentation;
 
 import com.service.alaw.infra.sse.SseEmitterManager;
+import com.service.alaw.platform.contract.application.service.ContractAnalysisSseReplayService;
 import com.service.alaw.platform.contract.presentation.swagger.ContractSseSpec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,10 +19,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ContractSseController implements ContractSseSpec {
 
     private final SseEmitterManager sseEmitterManager;
+    private final ContractAnalysisSseReplayService replayService;
 
     @GetMapping(value = "/analysis/{jobId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable String jobId) {
         log.info("[SSE] 구독 요청 - jobId={}", jobId);
-        return sseEmitterManager.register(jobId);
+        SseEmitter emitter = sseEmitterManager.register(jobId);
+        replayService.replayIfFinished(jobId, emitter);
+        return emitter;
     }
 }

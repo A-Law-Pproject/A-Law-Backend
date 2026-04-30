@@ -29,7 +29,7 @@ public class SseEmitterManager {
         log.info("[SSE] New subscription for jobId={}", jobId);
 
         // 연결 확인 이벤트 전송
-        sendToEmitter(emitter, "connection", Map.of("status", "connected", "jobId", jobId));
+        send(emitter, "connection", Map.of("status", "connected", "jobId", jobId));
 
         // 완료/타임아웃 시 자동 제거
         emitter.onCompletion(() -> remove(jobId, emitter));
@@ -53,13 +53,13 @@ public class SseEmitterManager {
         log.info("[SSE] Sending {} event to {} subscribers for jobId={}",
                 eventType, emitters.size(), jobId);
 
-        emitters.forEach(emitter -> sendToEmitter(emitter, eventType, data));
+        emitters.forEach(emitter -> send(emitter, eventType, data));
     }
 
     /**
      * 개별 Emitter에 이벤트 전송
      */
-    private void sendToEmitter(SseEmitter emitter, String eventType, Object data) {
+    public void send(SseEmitter emitter, String eventType, Object data) {
         try {
             emitter.send(SseEmitter.event()
                     .name(eventType)
@@ -68,6 +68,16 @@ public class SseEmitterManager {
             log.error("[SSE] Error sending event: {}", e.getMessage());
             emitter.completeWithError(e);
         }
+    }
+
+    public void complete(String jobId) {
+        CopyOnWriteArrayList<SseEmitter> emitters = subscribers.remove(jobId);
+        if (emitters == null || emitters.isEmpty()) {
+            return;
+        }
+
+        emitters.forEach(SseEmitter::complete);
+        log.info("[SSE] Completed subscriptions for jobId={}", jobId);
     }
 
     /**

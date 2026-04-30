@@ -31,6 +31,7 @@ public class ContractAnalysisDocument {
     @Field("s3_key")
     private String s3Key;
 
+    @Indexed
     @Field("job_id")
     private String jobId;
 

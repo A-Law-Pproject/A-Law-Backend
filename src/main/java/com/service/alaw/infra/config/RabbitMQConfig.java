@@ -1,6 +1,10 @@
 package com.service.alaw.infra.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -16,34 +20,38 @@ import java.util.Map;
 public class RabbitMQConfig {
 
     @Value("${app.rabbitmq.exchange}")
-    private String exchangeName;           // contract-analysis-ex
+    private String exchangeName;
 
     @Value("${app.rabbitmq.queue}")
-    private String queueName;             // contract-analysis-queue
+    private String queueName;
 
     @Value("${app.rabbitmq.routing-key}")
-    private String routingKey;            // contract.analyze
+    private String routingKey;
 
     @Value("${app.rabbitmq.ai-result-queue}")
-    private String aiResultQueueName;     // ai.result.queue
-
-    @Value("${app.rabbitmq.result-queue}")
-    private String resultQueueName;       // contract-analysis-result-queue
+    private String aiResultQueueName;
 
     @Value("${app.rabbitmq.voice-exchange}")
-    private String voiceExchangeName;     // voice-analysis-ex
+    private String voiceExchangeName;
 
     @Value("${app.rabbitmq.voice-queue}")
-    private String voiceQueueName;        // voice-record-queue
+    private String voiceQueueName;
 
     @Value("${app.rabbitmq.voice-routing-key}")
-    private String voiceRoutingKey;       // voice.record
+    private String voiceRoutingKey;
 
     @Value("${app.rabbitmq.voice-result-queue}")
-    private String voiceResultQueueName;  // voice-result-queue
+    private String voiceResultQueueName;
 
     @Value("${app.rabbitmq.voice-result-routing-key}")
-    private String voiceResultRoutingKey; // voice.result
+    private String voiceResultRoutingKey;
+
+    @Value("${app.rabbitmq.voice-result-exchange}")
+    private String voiceResultExchangeName;
+
+    private static final String DLX_SUFFIX = ".dlx";
+    private static final String DLQ_SUFFIX = ".dlq";
+    private static final String DLQ_ROUTING_KEY = "dead-letter";
 
     @Bean
     public MessageConverter messageConverter() {
@@ -57,19 +65,15 @@ public class RabbitMQConfig {
         return rabbitTemplate;
     }
 
-    // ─── Spring → FastAPI ────────────────────────────────────────────────────
-
-    /** 계약서 분석 요청 Exchange */
     @Bean
     public DirectExchange contractExchange() {
         return new DirectExchange(exchangeName, true, false);
     }
 
-    /** 계약서 분석 요청 Queue (DLQ 연결 + TTL 24h) */
     @Bean
     public Queue contractQueue() {
         Map<String, Object> args = new HashMap<>();
-        args.put("x-dead-letter-exchange", exchangeName + ".dlx");
+        args.put("x-dead-letter-exchange", exchangeName + DLX_SUFFIX);
         args.put("x-dead-letter-routing-key", routingKey + ".failed");
         args.put("x-message-ttl", 86400000);
         return new Queue(queueName, true, false, false, args);
@@ -81,22 +85,33 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding dlqBinding() {
-        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(routingKey + ".failed");
+    public DirectExchange contractDeadLetterExchange() {
+        return new DirectExchange(exchangeName + DLX_SUFFIX, true, false);
     }
 
-    // ─── FastAPI → Spring ────────────────────────────────────────────────────
+    @Bean
+    public Queue contractDeadLetterQueue() {
+        return QueueBuilder.durable(queueName + DLQ_SUFFIX).build();
+    }
 
-    /** FastAPI가 분석 결과를 publish하는 Exchange */
+    @Bean
+    public Binding contractDeadLetterBinding() {
+        return BindingBuilder.bind(contractDeadLetterQueue())
+                .to(contractDeadLetterExchange())
+                .with(routingKey + ".failed");
+    }
+
     @Bean
     public DirectExchange aiResultExchange() {
         return new DirectExchange("contract.analysis.result", true, false);
     }
 
-    /** Spring이 분석 결과를 consume하는 Queue (SSEListener가 구독) */
     @Bean
     public Queue aiResultQueue() {
-        return new Queue(aiResultQueueName, true);  // ai.result.queue
+        return QueueBuilder.durable(aiResultQueueName)
+                .withArgument("x-dead-letter-exchange", aiResultDeadLetterExchangeName())
+                .withArgument("x-dead-letter-routing-key", DLQ_ROUTING_KEY)
+                .build();
     }
 
     @Bean
@@ -104,18 +119,22 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(aiResultQueue()).to(aiResultExchange()).with("ai.result");
     }
 
-    /** Job 상태 추적 전용 Queue (ContractAnalysisResultConsumer 구독) */
     @Bean
-    public Queue contractResultQueue() {
-        return new Queue(resultQueueName, true);
+    public DirectExchange aiResultDeadLetterExchange() {
+        return new DirectExchange(aiResultDeadLetterExchangeName(), true, false);
     }
 
     @Bean
-    public Binding contractResultBinding() {
-        return BindingBuilder.bind(contractResultQueue()).to(aiResultExchange()).with("ai.result");
+    public Queue aiResultDeadLetterQueue() {
+        return QueueBuilder.durable(aiResultQueueName + DLQ_SUFFIX).build();
     }
 
-    // ─── Voice: Spring → FastAPI ─────────────────────────────────────────────
+    @Bean
+    public Binding aiResultDeadLetterBinding() {
+        return BindingBuilder.bind(aiResultDeadLetterQueue())
+                .to(aiResultDeadLetterExchange())
+                .with(DLQ_ROUTING_KEY);
+    }
 
     @Bean
     public DirectExchange voiceExchange() {
@@ -132,38 +151,24 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(voiceQueue()).to(voiceExchange()).with(voiceRoutingKey);
     }
 
-    // ─── Voice: FastAPI → Spring ─────────────────────────────────────────────
-
     @Bean
     public DirectExchange voiceResultExchange() {
-        return new DirectExchange("voice.analysis.result", true, false);
+        return new DirectExchange(voiceResultExchangeName, true, false);
     }
 
     @Bean
     public Queue voiceResultQueue() {
-        return new Queue(voiceResultQueueName, true);
+        return new Queue(voiceResultQueueName, true, false, false);
     }
 
     @Bean
     public Binding voiceResultBinding() {
-        return BindingBuilder.bind(voiceResultQueue()).to(voiceResultExchange()).with(voiceResultRoutingKey);
+        return BindingBuilder.bind(voiceResultQueue())
+                .to(voiceResultExchange())
+                .with(voiceResultRoutingKey);
     }
 
-    @Bean
-    public DirectExchange deadLetterExchange() {
-        return new DirectExchange(exchangeName + ".dlx", true, false);
+    private String aiResultDeadLetterExchangeName() {
+        return "contract.analysis.result" + DLX_SUFFIX;
     }
-
-    @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable(queueName + ".dlx").build();
-    }
-
-    @Bean
-    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
-        return BindingBuilder.bind(deadLetterQueue)
-                .to(deadLetterExchange)
-                .with(routingKey + ".failed");
-    }
-
 }

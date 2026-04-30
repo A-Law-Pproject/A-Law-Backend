@@ -45,6 +45,9 @@ public record AnalysisResultMessage(
             int cautionCount,
             int safetyCount,
             double riskPercentage,
+            @JsonProperty("overallRiskScore")    double overallRiskScore,
+            @JsonProperty("overallRiskLevel")    String overallRiskLevel,
+            @JsonProperty("detectedClauseCount") int detectedClauseCount,
             List<ClauseDto> clauseResults
     ) {}
 
@@ -55,6 +58,9 @@ public record AnalysisResultMessage(
             String riskLevel,
             String recommendation,
             String legalReference,
-            String reasoningSummary
+            String reasoningSummary,
+            @JsonProperty("category")   String category,
+            @JsonProperty("score")      int score,
+            @JsonProperty("relatedLaw") String relatedLaw
     ) {}
 }
