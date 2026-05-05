@@ -2,7 +2,10 @@ package com.service.alaw.platform.voice.presentation;
 
 import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
+import com.service.alaw.platform.voice.application.dto.SttResponse;
+import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
+import com.service.alaw.platform.voice.application.service.STTService;
 import com.service.alaw.platform.voice.application.service.VoiceRecordService;
 import com.service.alaw.platform.voice.presentation.swagger.VoiceRecordSpec;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.Set;
 public class VoiceRecordController implements VoiceRecordSpec {
 
     private final VoiceRecordService voiceRecordService;
+    private final STTService sttService;
 
     private static final Set<String> ALLOWED_AUDIO_TYPES = Set.of(
             "audio/mpeg",
@@ -89,13 +93,24 @@ public class VoiceRecordController implements VoiceRecordSpec {
     // POST /api/v1/voice-records/{voiceRecordId}/analyze — 분석 시작
     @Override
     @PostMapping("/api/v1/voice-records/{voiceRecordId}/analyze")
-    public ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+    public ResponseEntity<ApiResponse<VoiceAnalyzeResponse>> analyzeVoiceRecord(
             @PathVariable Long voiceRecordId,
             @RequestParam(value = "contractId", required = false) Long contractId,
             @CurrentUserId Long userId) {
 
-        voiceRecordService.analyze(voiceRecordId, userId, contractId);
-        return ApiResponse.success();
+        VoiceAnalyzeResponse response = voiceRecordService.analyze(voiceRecordId, userId, contractId);
+        return ApiResponse.success(response);
+    }
+
+    // POST /api/v1/voice-records/{voiceRecordId}/transcribe — STT 변환
+    @Override
+    @PostMapping("/api/v1/voice-records/{voiceRecordId}/transcribe")
+    public ResponseEntity<ApiResponse<SttResponse>> transcribeVoiceRecord(
+            @PathVariable Long voiceRecordId,
+            @CurrentUserId Long userId) {
+
+        SttResponse response = sttService.transcribe(voiceRecordId, userId);
+        return ApiResponse.success(response);
     }
 
     private void validateAudioFile(MultipartFile file) {

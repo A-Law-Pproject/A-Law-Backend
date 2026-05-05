@@ -2,6 +2,8 @@ package com.service.alaw.platform.voice.presentation.swagger;
 
 import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
+import com.service.alaw.platform.voice.application.dto.SttResponse;
+import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -77,15 +79,30 @@ public interface VoiceRecordSpec {
             @Parameter(hidden = true) @CurrentUserId Long userId
     );
 
-    @Operation(summary = "팩트체크 분석 시작", description = "저장된 음성의 팩트체크 분석을 시작합니다. 계약서가 미연결 상태면 contractId 필수입니다.")
+    @Operation(summary = "팩트체크 분석 시작", description = "저장된 음성의 팩트체크 분석을 시작합니다. 계약서가 미연결 상태면 contractId 필수입니다. 응답의 jobId로 SSE를 구독하세요.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "분석 요청 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "분석 요청 성공",
+                    content = @Content(schema = @Schema(implementation = VoiceAnalyzeResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "녹음 또는 계약서를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    ResponseEntity<ApiResponse<Void>> analyzeVoiceRecord(
+    ResponseEntity<ApiResponse<VoiceAnalyzeResponse>> analyzeVoiceRecord(
             @Parameter(description = "녹음 ID", required = true) @PathVariable Long voiceRecordId,
             @Parameter(description = "계약서 ID (계약서 미연결 시 필수)") @RequestParam(value = "contractId", required = false) Long contractId,
+            @Parameter(hidden = true) @CurrentUserId Long userId
+    );
+
+    @Operation(summary = "음성 텍스트 변환 (STT)", description = "저장된 음성 파일을 텍스트로 변환합니다. OpenAI Whisper API를 사용합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변환 성공",
+                    content = @Content(schema = @Schema(implementation = SttResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "녹음을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "STT 변환 실패",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<SttResponse>> transcribeVoiceRecord(
+            @Parameter(description = "녹음 ID", required = true) @PathVariable Long voiceRecordId,
             @Parameter(hidden = true) @CurrentUserId Long userId
     );
 }

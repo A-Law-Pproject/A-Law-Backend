@@ -7,6 +7,7 @@ import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import com.service.alaw.platform.voice.application.dto.VoiceAnalysisMessage;
+import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
 import com.service.alaw.platform.voice.domain.entity.VoiceRecord;
 import com.service.alaw.platform.voice.domain.repository.VoiceRecordRepository;
@@ -109,7 +110,7 @@ public class VoiceRecordService {
 
     // POST /api/v1/voice-records/{voiceRecordId}/analyze — 분석 시작
     @Transactional
-    public void analyze(Long voiceRecordId, Long userId, Long contractId) {
+    public VoiceAnalyzeResponse analyze(Long voiceRecordId, Long userId, Long contractId) {
         VoiceRecord voiceRecord = voiceRecordRepository.findById(voiceRecordId)
                 .filter(v -> v.getUser().getUserId().equals(userId))
                 .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
@@ -134,5 +135,6 @@ public class VoiceRecordService {
         ));
 
         log.info("[VoiceRecord] 분석 요청 - voiceRecordId={}, jobId={}", voiceRecordId, newJobId);
+        return new VoiceAnalyzeResponse(voiceRecordId, newJobId);
     }
 }

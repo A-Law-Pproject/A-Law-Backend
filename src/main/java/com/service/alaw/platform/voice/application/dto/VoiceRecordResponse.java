@@ -12,6 +12,7 @@ public record VoiceRecordResponse(
         String jobId,
         String fileUrl,
         VoiceRecordStatus status,
+        String transcript,
         LocalDateTime createdAt
 ) {
     public static VoiceRecordResponse from(VoiceRecord voiceRecord) {
@@ -22,6 +23,7 @@ public record VoiceRecordResponse(
                 voiceRecord.getJobId(),
                 voiceRecord.getFileUrl(),
                 voiceRecord.getStatus(),
+                voiceRecord.getTranscript(),
                 voiceRecord.getCreatedDate()
         );
     }

@@ -10,6 +10,8 @@ public interface VoiceRecordRepository extends JpaRepository<VoiceRecord, Long> 
 
     Optional<VoiceRecord> findByContract_ContractIdAndUser_UserId(Long contractId, Long userId);
 
+    List<VoiceRecord> findAllByContract_ContractIdAndUser_UserId(Long contractId, Long userId);
+
     Optional<VoiceRecord> findByJobId(String jobId);
 
     List<VoiceRecord> findAllByUser_UserIdOrderByCreatedDateDesc(Long userId);

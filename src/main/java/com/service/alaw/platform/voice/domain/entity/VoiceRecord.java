@@ -47,6 +47,9 @@ public class VoiceRecord extends BaseTimeEntity {
     @Column(name = "analysis_id", length = 255)
     private String analysisId;
 
+    @Column(name = "transcript", columnDefinition = "TEXT")
+    private String transcript;
+
     @Builder
     private VoiceRecord(Contract contract, User user, String title, String jobId, String s3Key, String fileUrl) {
         this.contract = contract;
@@ -96,5 +99,9 @@ public class VoiceRecord extends BaseTimeEntity {
 
     public void fail() {
         this.status = VoiceRecordStatus.FAILED;
+    }
+
+    public void updateTranscript(String transcript) {
+        this.transcript = transcript;
     }
 }
