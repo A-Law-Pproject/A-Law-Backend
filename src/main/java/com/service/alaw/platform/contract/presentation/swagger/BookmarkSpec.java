@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@Tag(name = "Contract Bookmark", description = "계약서 즐겨찾기 API")
+@Tag(name = "Contract Management", description = "계약서 관리 API")
 public interface BookmarkSpec {
 
   @Operation(summary = "계약서 즐겨찾기 등록", description = "특정 계약서를 중요 계약서로 등록합니다.")

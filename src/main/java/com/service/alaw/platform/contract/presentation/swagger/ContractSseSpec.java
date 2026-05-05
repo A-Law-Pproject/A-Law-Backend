@@ -8,13 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@Tag(name = "Contract", description = "계약서 OCR 및 분석 API")
+@Tag(name = "Contract Analysis", description = "계약서 OCR 및 분석 API")
 public interface ContractSseSpec {
 
     @Operation(
-            summary = "[완료] 계약서 분석 결과 SSE 구독",
+            summary = "[완료] Contract Analysis 결과 SSE 구독",
             description = """
-                    계약서 분석 결과를 Server-Sent Events(SSE)로 실시간 수신합니다.
+                    Contract Analysis 결과를 Server-Sent Events(SSE)로 실시간 수신합니다.
                     OCR 요청 응답으로 받은 jobId를 사용하여 구독하세요.
 
                     **이벤트 순서:**

@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Contract Explanation", description = "계약서 쉬운 말 요약 API")
+@Tag(name = "Contract Analysis", description = "계약서 OCR 및 분석 API")
 public interface ExplanationSpec {
 
   @Operation(summary = "쉬운 말 요약 생성", description = "어려운 법률 문장을 쉬운 말로 변환합니다.")
