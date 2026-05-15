@@ -13,7 +13,8 @@ public record VoiceAnalysisMessage(
         @JsonProperty("userId")       Long userId,
         @JsonProperty("jobId")        String jobId,
         @JsonProperty("s3Key")        String s3Key,
-        @JsonProperty("rawText")      String rawText
+        @JsonProperty("rawText")      String rawText,
+        @JsonProperty("transcript")   String transcript
 ) implements Serializable {
 
     private static final long serialVersionUID = 1L;

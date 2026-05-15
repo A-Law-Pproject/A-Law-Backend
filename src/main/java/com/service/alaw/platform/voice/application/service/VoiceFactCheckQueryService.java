@@ -23,7 +23,7 @@ public class VoiceFactCheckQueryService {
 
     public VoiceFactCheckResponse getFactCheck(Long contractId, Long voiceRecordId, Long userId) {
         VoiceRecord voiceRecord = voiceRecordRepository.findById(voiceRecordId)
-                .filter(vr -> vr.getContract().getContractId().equals(contractId))
+                .filter(vr -> vr.getContract() != null && vr.getContract().getContractId().equals(contractId))
                 .filter(vr -> vr.getUser().getUserId().equals(userId))
                 .orElseThrow(() -> new NotFoundException(CommonErrorCode.NOT_FOUND));
 

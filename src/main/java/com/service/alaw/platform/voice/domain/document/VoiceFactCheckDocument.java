@@ -49,11 +49,15 @@ public class VoiceFactCheckDocument {
     private LocalDateTime createdAt;
 
     public static VoiceFactCheckDocument from(VoiceFactCheckResultMessage message) {
+        return from(message, message.transcript());
+    }
+
+    public static VoiceFactCheckDocument from(VoiceFactCheckResultMessage message, String transcript) {
         return VoiceFactCheckDocument.builder()
                 .voiceRecordId(message.voiceRecordId())
                 .contractId(message.contractId())
                 .jobId(message.jobId())
-                .transcript(message.transcript())
+                .transcript(transcript)
                 .factCheckItems(
                         message.factCheckItems() != null
                                 ? message.factCheckItems().stream().map(FactCheckItem::from).toList()

@@ -39,8 +39,7 @@ public class VoiceRecordService {
         Contract contract = contractRepository.findByContractIdAndUser_UserId(contractId, userId)
                 .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
+        User user = contract.getUser();
 
         String jobId = UUID.randomUUID().toString();
         String s3Key = s3UploadService.upload(file);
@@ -49,6 +48,7 @@ public class VoiceRecordService {
         VoiceRecord voiceRecord = voiceRecordRepository
                 .findByContract_ContractIdAndUser_UserId(contractId, userId)
                 .map(existing -> {
+                    s3UploadService.delete(existing.getS3Key());
                     existing.updateFile(title, jobId, s3Key, fileUrl);
                     return existing;
                 })
@@ -116,6 +116,9 @@ public class VoiceRecordService {
                 .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
 
         if (voiceRecord.getContract() == null) {
+            if (contractId == null) {
+                throw new ContractNotFoundException(CommonErrorCode.NOT_FOUND);
+            }
             Contract contract = contractRepository.findByContractIdAndUser_UserId(contractId, userId)
                     .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
             voiceRecord.linkContract(contract);
@@ -131,7 +134,8 @@ public class VoiceRecordService {
                 userId,
                 newJobId,
                 voiceRecord.getS3Key(),
-                voiceRecord.getContract().getRawText()
+                voiceRecord.getContract().getRawText(),
+                voiceRecord.getTranscript()
         ));
 
         log.info("[VoiceRecord] 분석 요청 - voiceRecordId={}, jobId={}", voiceRecordId, newJobId);
