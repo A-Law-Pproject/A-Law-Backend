@@ -32,6 +32,29 @@ public class WebClientConfig {
     @Value("${fastapi.timeout.read}")
     private int readTimeout;
 
+    @Value("${fastapi.timeout.ocr-read:90000}")
+    private int ocrReadTimeout;
+
+    @Bean
+    public WebClient fastApiOcrWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+                .responseTimeout(Duration.ofMillis(ocrReadTimeout))
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(ocrReadTimeout, TimeUnit.MILLISECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(ocrReadTimeout, TimeUnit.MILLISECONDS))
+                );
+
+        return WebClient.builder()
+                .baseUrl(fastApiBaseUrl)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .filter(logRequest())
+                .filter(logResponse())
+                .build();
+    }
+
     @Bean
     public WebClient fastApiWebClient() {
         // Netty HTTP 클라이언트 설정

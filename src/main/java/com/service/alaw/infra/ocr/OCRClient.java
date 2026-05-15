@@ -19,7 +19,7 @@ public class OCRClient {
 
     private final WebClient webClient;
 
-    public OCRClient(@Qualifier("fastApiWebClient") WebClient webClient) {
+    public OCRClient(@Qualifier("fastApiOcrWebClient") WebClient webClient) {
         this.webClient = webClient;
     }
 
@@ -44,7 +44,7 @@ public class OCRClient {
                                     })
                     )
                     .bodyToMono(FastApiOcrResponse.class)
-                    .block(Duration.ofSeconds(30));
+                    .block(Duration.ofSeconds(90));
 
             log.info("FastAPI OCR 응답 수신 - success: {}, 단어 수: {}",
                     response.success(),
