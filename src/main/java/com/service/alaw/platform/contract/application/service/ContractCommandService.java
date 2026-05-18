@@ -25,6 +25,7 @@ public class ContractCommandService {
     log.info("계약서 저장 확정 시작 - userId: {}, contractId: {}, title: {}", userId, request.contractId(), request.title());
     Contract contract = contractValidator.validateContractOwnership(request.contractId(), userId);
     contract.confirmSave(request.title(), request.contractType());
+    contractRepository.save(contract);
     log.info("계약서 저장 확정 완료 - contractId: {}", contract.getContractId());
     return ContractResponse.from(contract);
   }

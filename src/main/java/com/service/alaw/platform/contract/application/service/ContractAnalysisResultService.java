@@ -80,16 +80,16 @@ public class ContractAnalysisResultService {
                 ));
             }
 
-            if (message.riskAnalysis() != null) {
-                sseEmitterManager.send(jobId, "analysis_result", Map.of(
-                        "totalClauses", message.riskAnalysis().totalClauses(),
-                        "riskCount", message.riskAnalysis().riskCount(),
-                        "cautionCount", message.riskAnalysis().cautionCount(),
-                        "safetyCount", message.riskAnalysis().safetyCount(),
-                        "riskPercentage", message.riskAnalysis().riskPercentage(),
-                        "clauseResults", defaultList(message.riskAnalysis().clauseResults())
-                ));
-            }
+            // riskAnalysis가 null이어도 항상 analysis_result를 전송해야 프론트가 이벤트를 수신한다.
+            var ra = message.riskAnalysis();
+            sseEmitterManager.send(jobId, "analysis_result", Map.of(
+                    "totalClauses", ra != null ? ra.totalClauses() : 0,
+                    "riskCount", ra != null ? ra.riskCount() : 0,
+                    "cautionCount", ra != null ? ra.cautionCount() : 0,
+                    "safetyCount", ra != null ? ra.safetyCount() : 0,
+                    "riskPercentage", ra != null ? ra.riskPercentage() : 0.0,
+                    "clauseResults", ra != null ? defaultList(ra.clauseResults()) : List.of()
+            ));
         } else {
             sseEmitterManager.send(jobId, "error", Map.of("message", "분석에 실패했습니다."));
         }
