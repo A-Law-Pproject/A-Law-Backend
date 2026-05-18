@@ -22,7 +22,8 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
   // userId로 조회 (Service에서 User 객체 없이 조회할 때 사용)
   List<Contract> findByUser_UserIdOrderByCreatedDateDesc(Long userId);
 
-  Optional<Contract> findByContractIdAndUser_UserId(Long contractId, Long userId);
+  // 사용자가 저장 확정한 계약서 목록 조회
+  List<Contract> findByUser_UserIdAndUserSavedTrueOrderByCreatedDateDesc(Long userId);
 
-  List<Contract> findByUser_UserIdAndBookmarkTrueOrderByCreatedDateDesc(Long userId);
+  Optional<Contract> findByContractIdAndUser_UserId(Long contractId, Long userId);
 }

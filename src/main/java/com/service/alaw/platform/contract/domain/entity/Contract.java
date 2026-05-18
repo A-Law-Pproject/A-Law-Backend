@@ -45,6 +45,9 @@ public class Contract extends BaseTimeEntity {
   @Column(name = "bookmark", nullable = false)
   private boolean bookmark;
 
+  @Column(name = "user_saved", nullable = false)
+  private boolean userSaved;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "contract_type")
   private ContractType contractType;
@@ -63,6 +66,7 @@ public class Contract extends BaseTimeEntity {
     this.fileUrl = fileUrl;
     this.contractType = contractType;
     this.bookmark = false;
+    this.userSaved = false;
     this.status = ContractStatus.PENDING;
   }
 
@@ -108,6 +112,18 @@ public class Contract extends BaseTimeEntity {
 
   public void updateFileUrl(String fileUrl) {
     this.fileUrl = fileUrl;
+  }
+
+  public void updateContractType(ContractType contractType) {
+    this.contractType = contractType;
+  }
+
+  public void confirmSave(String title, ContractType contractType) {
+    this.title = title;
+    if (contractType != null) {
+      this.contractType = contractType;
+    }
+    this.userSaved = true;
   }
 
   public void saveAnalysisResult(String summaryText, int riskCount) {

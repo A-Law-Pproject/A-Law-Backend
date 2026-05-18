@@ -9,6 +9,7 @@ import com.service.alaw.platform.contract.domain.repository.ContractAnalysisDocu
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class ContractQueryService {
 
   public List<ContractListResponse> getMyContracts(Long userId) {
     log.info("계약서 목록 조회 시작 - userId: {}", userId);
-    List<Contract> contracts = contractRepository.findByUser_UserIdOrderByCreatedDateDesc(userId);
+    List<Contract> contracts = contractRepository.findByUser_UserIdAndUserSavedTrueOrderByCreatedDateDesc(userId);
     log.info("계약서 목록 조회 완료 - userId: {}, 건수: {}", userId, contracts.size());
     return convertToListResponses(contracts);
   }
@@ -36,31 +37,40 @@ public class ContractQueryService {
   public ContractResponse getContract(Long contractId, Long userId) {
     log.info("계약서 단건 조회 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);
+    Optional<ContractAnalysisDocument> analysisDocument =
+        contractAnalysisDocumentRepository.findByContractId(contract.getContractId());
     log.info("계약서 단건 조회 완료 - contractId: {}", contractId);
     return ContractResponse.from(
         contract,
-        resolveAnalysisId(contract),
-        resolveRawText(contract));
+        resolveAnalysisId(contract, analysisDocument),
+        resolveRawText(contract, analysisDocument));
   }
 
   private List<ContractListResponse> convertToListResponses(List<Contract> contracts) {
     return contracts.stream().map(ContractListResponse::from).toList();
   }
 
-  private String resolveAnalysisId(Contract contract) {
+  private String resolveAnalysisId(
+      Contract contract, Optional<ContractAnalysisDocument> analysisDocument) {
     if (StringUtils.hasText(contract.getAnalysisId())) {
       return contract.getAnalysisId();
     }
 
-    return contractAnalysisDocumentRepository
-        .findByContractId(contract.getContractId())
+    return analysisDocument
         .map(ContractAnalysisDocument::getJobId)
         .orElse(null);
   }
 
-  private String resolveRawText(Contract contract) {
+  private String resolveRawText(
+      Contract contract, Optional<ContractAnalysisDocument> analysisDocument) {
     if (StringUtils.hasText(contract.getRawText())) {
       return contract.getRawText();
+    }
+
+    // fileUrl alone is user-controlled for manually created contracts, so only
+    // allow fallback when this contract has a trusted analysis document.
+    if (analysisDocument.isEmpty()) {
+      return null;
     }
 
     if (!StringUtils.hasText(contract.getFileUrl())) {

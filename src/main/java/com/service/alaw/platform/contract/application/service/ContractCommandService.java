@@ -1,13 +1,10 @@
 package com.service.alaw.platform.contract.application.service;
 
-import com.service.alaw.common.exception.NotFoundException;
-import com.service.alaw.common.exception.code.CommonErrorCode;
 import com.service.alaw.platform.contract.application.dto.crud.ContractCreateRequest;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractUpdateRequest;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
-import com.service.alaw.platform.user.domain.entity.User;
 import com.service.alaw.platform.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +22,11 @@ public class ContractCommandService {
   private final ContractValidator contractValidator;
 
   public ContractResponse createContract(Long userId, ContractCreateRequest request) {
-    log.info("계약서 생성 시작 - userId: {}, title: {}", userId, request.title());
-    User user = findUserById(userId);
-    Contract contract = buildContract(user, request);
-    Contract savedContract = contractRepository.save(contract);
-    log.info("계약서 생성 완료 - contractId: {}", savedContract.getContractId());
-    return ContractResponse.from(savedContract);
+    log.info("계약서 저장 확정 시작 - userId: {}, contractId: {}, title: {}", userId, request.contractId(), request.title());
+    Contract contract = contractValidator.validateContractOwnership(request.contractId(), userId);
+    contract.confirmSave(request.title(), request.contractType());
+    log.info("계약서 저장 확정 완료 - contractId: {}", contract.getContractId());
+    return ContractResponse.from(contract);
   }
 
   public ContractResponse updateContract(
@@ -69,18 +65,4 @@ public class ContractCommandService {
     return contract.getRawText();
   }
 
-  private User findUserById(Long userId) {
-    return userRepository
-        .findById(userId)
-        .orElseThrow(() -> new NotFoundException(CommonErrorCode.NOT_FOUND));
-  }
-
-  private Contract buildContract(User user, ContractCreateRequest request) {
-    return Contract.builder()
-        .user(user)
-        .title(request.title())
-        .fileUrl(request.fileUrl())
-        .contractType(request.contractType())
-        .build();
-  }
 }
