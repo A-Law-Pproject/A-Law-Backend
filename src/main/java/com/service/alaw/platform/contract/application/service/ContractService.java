@@ -5,10 +5,12 @@ import com.service.alaw.infra.messaging.ContractAnalysisPublisher;
 import com.service.alaw.infra.ocr.OCRClient;
 import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.application.dto.analysis.ContractAnalysisMessage;
+import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.ocr.FastApiOcrResponse;
 import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
 import com.service.alaw.platform.contract.domain.entity.AnalysisJob;
 import com.service.alaw.platform.contract.domain.entity.Contract;
+import com.service.alaw.platform.contract.domain.entity.ContractType;
 import com.service.alaw.platform.contract.domain.repository.AnalysisJobRepository;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
@@ -35,6 +37,53 @@ public class ContractService {
   private final ContractRepository contractRepository;
   private final UserRepository userRepository;
   private final AnalysisJobRepository analysisJobRepository;
+
+  public ContractResponse uploadAndSave(MultipartFile file, String title, ContractType contractType, Long userId) {
+    try {
+      String s3Key = s3Service.upload(file);
+      String imageUrl = s3Service.getFileUrl(s3Key);
+      log.info("S3 업로드 완료 - Key: {}", s3Key);
+
+      FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key);
+      log.info("OCR 완료 - 단어 수: {}", ocrResponse.words() != null ? ocrResponse.words().size() : 0);
+
+      OcrResultDocument ocrDocument = OcrResultDocument.of(
+              s3Key, imageUrl,
+              ocrResponse.imageWidth(), ocrResponse.imageHeight(),
+              ocrResponse.fullText(), ocrResponse.markdown(),
+              ocrResponse.contractData(), ocrResponse.validation(),
+              ocrResponse.words(), ocrResponse.warnings());
+      ocrResultRepository.save(ocrDocument);
+
+      User user = userRepository.findById(userId)
+              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
+
+      Contract contract = Contract.of(user, title, imageUrl, contractType);
+      contract.confirmSave(title, contractType);
+      contract.updateRawText(ocrResponse.fullText());
+
+      String jobId = UUID.randomUUID().toString();
+      contract.updateAnalysisId(jobId);
+      Contract savedContract = contractRepository.save(contract);
+
+      AnalysisJob analysisJob = AnalysisJob.of(jobId, savedContract.getContractId(), userId);
+      analysisJobRepository.save(analysisJob);
+
+      ContractAnalysisMessage message = ContractAnalysisMessage.builder()
+              .jobId(jobId).s3Key(s3Key).userId(userId).contractId(savedContract.getContractId())
+              .build();
+      publisher.publish(message);
+      log.info("계약서 저장 및 분석 큐 전송 완료 - contractId: {}, jobId: {}", savedContract.getContractId(), jobId);
+
+      return ContractResponse.from(savedContract);
+    } catch (FastApiException e) {
+      log.error("OCR 처리 실패: {}", e.getMessage(), e);
+      throw e;
+    } catch (Exception e) {
+      log.error("계약서 저장 중 오류 발생", e);
+      throw new FastApiException("계약서 저장 중 오류가 발생했습니다.", e);
+    }
+  }
 
   public FastApiOcrResponse uploadAndOCR(MultipartFile file, Long userId) {
     try {
