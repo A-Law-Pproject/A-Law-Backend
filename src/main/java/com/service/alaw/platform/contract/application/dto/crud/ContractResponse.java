@@ -16,15 +16,19 @@ public record ContractResponse(
     String rawText,
     LocalDateTime createdAt) {
   public static ContractResponse from(Contract contract) {
+    return from(contract, contract.getAnalysisId(), contract.getRawText());
+  }
+
+  public static ContractResponse from(Contract contract, String analysisId, String rawText) {
     return new ContractResponse(
         contract.getContractId(),
-        contract.getAnalysisId(),
+        analysisId,
         contract.getTitle(),
         contract.getFileUrl(),
         contract.isBookmark(),
         contract.getContractType(),
         contract.getStatus(),
-        contract.getRawText(),
+        rawText,
         contract.getCreatedDate());
   }
 }

@@ -76,6 +76,9 @@ public class ContractService {
 
       // 5. 분석 작업을 큐에 전송 (비동기 처리)
       String jobId = UUID.randomUUID().toString();
+      savedContract.updateRawText(ocrResponse.fullText());
+      savedContract.updateAnalysisId(jobId);
+
       AnalysisJob analysisJob = AnalysisJob.of(jobId, savedContract.getContractId(),userId);
       analysisJobRepository.save(analysisJob);
       log.info("AnalysisJob 저장 완료 - jobId: {}, contractId: {}", jobId, savedContract.getContractId());

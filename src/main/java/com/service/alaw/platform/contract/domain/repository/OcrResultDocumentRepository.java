@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface OcrResultDocumentRepository extends MongoRepository<OcrResultDocument, String> {
 
   Optional<OcrResultDocument> findByS3Key(String s3Key);
+
+  Optional<OcrResultDocument> findByImageUrl(String imageUrl);
 }

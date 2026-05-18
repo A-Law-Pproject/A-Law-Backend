@@ -2,13 +2,18 @@ package com.service.alaw.platform.contract.application.service;
 
 import com.service.alaw.platform.contract.application.dto.crud.ContractListResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
+import com.service.alaw.platform.contract.domain.document.ContractAnalysisDocument;
+import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
 import com.service.alaw.platform.contract.domain.entity.Contract;
+import com.service.alaw.platform.contract.domain.repository.ContractAnalysisDocumentRepository;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
+import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -18,6 +23,8 @@ public class ContractQueryService {
 
   private final ContractRepository contractRepository;
   private final ContractValidator contractValidator;
+  private final OcrResultDocumentRepository ocrResultDocumentRepository;
+  private final ContractAnalysisDocumentRepository contractAnalysisDocumentRepository;
 
   public List<ContractListResponse> getMyContracts(Long userId) {
     log.info("계약서 목록 조회 시작 - userId: {}", userId);
@@ -30,10 +37,39 @@ public class ContractQueryService {
     log.info("계약서 단건 조회 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);
     log.info("계약서 단건 조회 완료 - contractId: {}", contractId);
-    return ContractResponse.from(contract);
+    return ContractResponse.from(
+        contract,
+        resolveAnalysisId(contract),
+        resolveRawText(contract));
   }
 
   private List<ContractListResponse> convertToListResponses(List<Contract> contracts) {
     return contracts.stream().map(ContractListResponse::from).toList();
+  }
+
+  private String resolveAnalysisId(Contract contract) {
+    if (StringUtils.hasText(contract.getAnalysisId())) {
+      return contract.getAnalysisId();
+    }
+
+    return contractAnalysisDocumentRepository
+        .findByContractId(contract.getContractId())
+        .map(ContractAnalysisDocument::getJobId)
+        .orElse(null);
+  }
+
+  private String resolveRawText(Contract contract) {
+    if (StringUtils.hasText(contract.getRawText())) {
+      return contract.getRawText();
+    }
+
+    if (!StringUtils.hasText(contract.getFileUrl())) {
+      return null;
+    }
+
+    return ocrResultDocumentRepository
+        .findByImageUrl(contract.getFileUrl())
+        .map(OcrResultDocument::getFullText)
+        .orElse(null);
   }
 }

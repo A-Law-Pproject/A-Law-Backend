@@ -47,6 +47,7 @@ public class ContractAnalysisResultService {
                     message.summary() != null ? message.summary().summaryText() : "",
                     message.riskAnalysis() != null ? message.riskAnalysis().riskCount() : 0
             );
+            contract.updateAnalysisId(message.jobId());
             log.info("[ResultService] Contract 분석 완료: contractId={}", message.contractId());
         });
 
