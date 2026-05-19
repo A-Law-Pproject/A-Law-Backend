@@ -87,10 +87,10 @@ public class RedisConfig {
         ObjectMapper cacheObjectMapper = new ObjectMapper();
         cacheObjectMapper.registerModule(new JavaTimeModule());
         cacheObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        // 역직렬화 시 타입 정보 포함 — Java record 포함 모든 객체 복원 가능
+        // 역직렬화 시 타입 정보 포함 — record는 final이므로 NON_FINAL 대신 EVERYTHING 사용
         cacheObjectMapper.activateDefaultTyping(
                 cacheObjectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );
 
