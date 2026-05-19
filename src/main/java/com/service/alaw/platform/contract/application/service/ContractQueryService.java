@@ -2,6 +2,7 @@ package com.service.alaw.platform.contract.application.service;
 
 import com.service.alaw.platform.contract.application.dto.crud.ContractListResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
+import com.service.alaw.platform.contract.application.dto.ocr.OcrBlock;
 import com.service.alaw.platform.contract.domain.document.ContractAnalysisDocument;
 import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
 import com.service.alaw.platform.contract.domain.entity.Contract;
@@ -36,17 +37,19 @@ public class ContractQueryService {
     return convertToListResponses(contracts);
   }
 
-  @Cacheable(cacheNames = "contracts-detail", key = "#contractId")
   public ContractResponse getContract(Long contractId, Long userId) {
     log.info("계약서 단건 조회 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);
     Optional<ContractAnalysisDocument> analysisDocument =
         contractAnalysisDocumentRepository.findByContractId(contract.getContractId());
+    // rawText, words 모두 캐시 없이 MongoDB 직접 조회
+    Optional<OcrResultDocument> ocrDocument = resolveOcrDocument(contract, analysisDocument);
     log.info("계약서 단건 조회 완료 - contractId: {}", contractId);
     return ContractResponse.from(
         contract,
         resolveAnalysisId(contract, analysisDocument),
-        resolveRawText(contract, analysisDocument));
+        resolveRawText(contract, ocrDocument),
+        resolveWords(ocrDocument));
   }
 
   private List<ContractListResponse> convertToListResponses(List<Contract> contracts) {
@@ -64,25 +67,23 @@ public class ContractQueryService {
         .orElse(null);
   }
 
-  private String resolveRawText(
+  // fileUrl은 사용자가 직접 설정 가능한 값이므로, 신뢰된 분석 문서가 있을 때만 MongoDB 조회 허용
+  private Optional<OcrResultDocument> resolveOcrDocument(
       Contract contract, Optional<ContractAnalysisDocument> analysisDocument) {
+    if (analysisDocument.isEmpty() || !StringUtils.hasText(contract.getFileUrl())) {
+      return Optional.empty();
+    }
+    return ocrResultDocumentRepository.findByImageUrl(contract.getFileUrl());
+  }
+
+  private String resolveRawText(Contract contract, Optional<OcrResultDocument> ocrDocument) {
     if (StringUtils.hasText(contract.getRawText())) {
       return contract.getRawText();
     }
+    return ocrDocument.map(OcrResultDocument::getFullText).orElse(null);
+  }
 
-    // fileUrl alone is user-controlled for manually created contracts, so only
-    // allow fallback when this contract has a trusted analysis document.
-    if (analysisDocument.isEmpty()) {
-      return null;
-    }
-
-    if (!StringUtils.hasText(contract.getFileUrl())) {
-      return null;
-    }
-
-    return ocrResultDocumentRepository
-        .findByImageUrl(contract.getFileUrl())
-        .map(OcrResultDocument::getFullText)
-        .orElse(null);
+  private List<OcrBlock> resolveWords(Optional<OcrResultDocument> ocrDocument) {
+    return ocrDocument.map(OcrResultDocument::getWords).orElse(null);
   }
 }

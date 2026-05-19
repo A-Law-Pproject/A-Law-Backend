@@ -1,9 +1,11 @@
 package com.service.alaw.platform.contract.application.dto.crud;
 
+import com.service.alaw.platform.contract.application.dto.ocr.OcrBlock;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.entity.ContractStatus;
 import com.service.alaw.platform.contract.domain.entity.ContractType;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ContractResponse(
     Long contractId,
@@ -14,12 +16,14 @@ public record ContractResponse(
     ContractType contractType,
     ContractStatus status,
     String rawText,
+    List<OcrBlock> words,
     LocalDateTime createdAt) {
   public static ContractResponse from(Contract contract) {
-    return from(contract, contract.getAnalysisId(), contract.getRawText());
+    return from(contract, contract.getAnalysisId(), contract.getRawText(), null);
   }
 
-  public static ContractResponse from(Contract contract, String analysisId, String rawText) {
+  public static ContractResponse from(
+      Contract contract, String analysisId, String rawText, List<OcrBlock> words) {
     return new ContractResponse(
         contract.getContractId(),
         analysisId,
@@ -29,6 +33,7 @@ public record ContractResponse(
         contract.getContractType(),
         contract.getStatus(),
         rawText,
+        words,
         contract.getCreatedDate());
   }
 }
