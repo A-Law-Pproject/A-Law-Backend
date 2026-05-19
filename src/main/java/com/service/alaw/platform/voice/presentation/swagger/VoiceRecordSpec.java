@@ -4,6 +4,7 @@ import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeStartResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,6 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Voice Record", description = "음성 녹음 API")
 public interface VoiceRecordSpec {
+
+    @Operation(summary = "내 녹음 목록 조회", description = "로그인한 사용자의 모든 음성 녹음 목록을 최신순으로 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = VoiceRecordResponse.class)))
+    })
+    ResponseEntity<ApiResponse<List<VoiceRecordResponse>>> getMyVoiceRecords(
+            @Parameter(hidden = true) @CurrentUserId Long userId);
 
     @Operation(
             summary = "음성 녹음 저장",

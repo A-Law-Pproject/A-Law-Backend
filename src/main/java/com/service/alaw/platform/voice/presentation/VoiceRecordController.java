@@ -4,6 +4,7 @@ import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceAnalyzeStartResponse;
 import com.service.alaw.platform.voice.application.dto.VoiceRecordResponse;
+import java.util.List;
 import com.service.alaw.platform.voice.application.service.VoiceRecordService;
 import com.service.alaw.platform.voice.presentation.swagger.VoiceRecordSpec;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,13 @@ public class VoiceRecordController implements VoiceRecordSpec {
             "audio/x-m4a",
             "audio/m4a"
     );
+
+    @Override
+    @GetMapping("/voice-records")
+    public ResponseEntity<ApiResponse<List<VoiceRecordResponse>>> getMyVoiceRecords(
+            @CurrentUserId Long userId) {
+        return ApiResponse.retrieved(voiceRecordService.getMyVoiceRecords(userId));
+    }
 
     /**
      * 음성 분석 트리거.
