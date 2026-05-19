@@ -4,8 +4,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -24,9 +28,10 @@ import java.time.Duration;
 import java.util.Map;
 
 
+@Slf4j
 @EnableCaching
 @Configuration
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
     // lettuce 기반 redis 연결 팩토리 생성
 
     @Value("${spring.data.redis.host}")
@@ -49,7 +54,7 @@ public class RedisConfig {
         }
 
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(Duration.ofSeconds(120)) // 기본 60초 → 120초로 늘리기
+                .commandTimeout(Duration.ofSeconds(3))
                 .build();
 
         return new LettuceConnectionFactory(config, clientConfig);
@@ -87,10 +92,10 @@ public class RedisConfig {
         ObjectMapper cacheObjectMapper = new ObjectMapper();
         cacheObjectMapper.registerModule(new JavaTimeModule());
         cacheObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        // 역직렬화 시 타입 정보 포함 — record는 final이므로 NON_FINAL 대신 EVERYTHING 사용
+        // EVERYTHING은 records + JavaTimeModule과 충돌 → NON_CONCRETE_AND_ARRAYS로 교체
         cacheObjectMapper.activateDefaultTyping(
                 cacheObjectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.EVERYTHING,
+                ObjectMapper.DefaultTyping.NON_CONCRETE_AND_ARRAYS,
                 JsonTypeInfo.As.PROPERTY
         );
 
@@ -114,6 +119,28 @@ public class RedisConfig {
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
+    }
+
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
+                log.warn("Redis 캐시 조회 실패 (캐시명={}, key={}) — DB로 폴백: {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
+                log.warn("Redis 캐시 저장 실패 (캐시명={}, key={}): {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
+                log.warn("Redis 캐시 삭제 실패 (캐시명={}, key={}): {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheClearError(RuntimeException e, Cache cache) {
+                log.warn("Redis 캐시 전체 삭제 실패 (캐시명={}): {}", cache.getName(), e.getMessage());
+            }
+        };
     }
 
 }

@@ -1,6 +1,7 @@
 package com.service.alaw.platform.contract.domain.document;
 
 import com.service.alaw.platform.contract.application.dto.analysis.AnalysisResultMessage;
+import com.service.alaw.platform.contract.application.dto.analysis.ClauseFieldNormalizer;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -123,6 +124,7 @@ public class ContractAnalysisDocument {
         private String clauseContent;
         private String riskLevel;
         private String legalReference;
+        private String relatedWork;
         private String reasoningSummary;
         private String category;
 
@@ -132,9 +134,18 @@ public class ContractAnalysisDocument {
                     .clauseContent(dto.clauseContent())
                     .riskLevel(dto.riskLevel())
                     .legalReference(dto.legalReference())
+                    .relatedWork(dto.relatedWork())
                     .reasoningSummary(dto.reasoningSummary())
                     .category(dto.category())
                     .build();
+        }
+
+        public String getLegalReference() {
+            return ClauseFieldNormalizer.normalizeLegalReference(legalReference, reasoningSummary);
+        }
+
+        public String getRelatedWork() {
+            return ClauseFieldNormalizer.normalizeRelatedWork(relatedWork, reasoningSummary);
         }
     }
 }

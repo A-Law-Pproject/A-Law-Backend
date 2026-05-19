@@ -94,6 +94,7 @@ public record ContractAnalysisDetailResponse(
       String clauseContent,
       String riskLevel,
       String legalReference,
+      String relatedWork,
       String reasoningSummary,
       String category) {
 
@@ -103,6 +104,7 @@ public record ContractAnalysisDetailResponse(
           document.getClauseContent(),
           document.getRiskLevel(),
           document.getLegalReference(),
+          document.getRelatedWork(),
           document.getReasoningSummary(),
           document.getCategory());
     }

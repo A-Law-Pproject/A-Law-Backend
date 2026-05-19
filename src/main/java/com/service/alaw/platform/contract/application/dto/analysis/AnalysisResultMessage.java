@@ -57,8 +57,14 @@ public record AnalysisResultMessage(
             String clauseContent,
             String riskLevel,
             @JsonProperty("legalReference")       String legalReference,
+            @JsonProperty("relatedWork")          String relatedWork,
             String reasoningSummary,
             @JsonProperty("category")         String category,
             @JsonProperty("score")            int score
-    ) {}
+    ) {
+        public ClauseDto {
+            legalReference = ClauseFieldNormalizer.normalizeLegalReference(legalReference, reasoningSummary);
+            relatedWork = ClauseFieldNormalizer.normalizeRelatedWork(relatedWork, reasoningSummary);
+        }
+    }
 }
