@@ -18,6 +18,7 @@ import com.service.alaw.platform.user.domain.entity.User;
 import com.service.alaw.platform.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +39,7 @@ public class ContractService {
   private final UserRepository userRepository;
   private final AnalysisJobRepository analysisJobRepository;
 
+  @CacheEvict(cacheNames = "contracts-list", key = "#userId")
   public ContractResponse uploadAndSave(MultipartFile file, String title, ContractType contractType, Long userId) {
     try {
       String s3Key = s3Service.upload(file);

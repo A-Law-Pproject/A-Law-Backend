@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,6 +28,7 @@ public class ContractQueryService {
   private final OcrResultDocumentRepository ocrResultDocumentRepository;
   private final ContractAnalysisDocumentRepository contractAnalysisDocumentRepository;
 
+  @Cacheable(cacheNames = "contracts-list", key = "#userId")
   public List<ContractListResponse> getMyContracts(Long userId) {
     log.info("계약서 목록 조회 시작 - userId: {}", userId);
     List<Contract> contracts = contractRepository.findByUser_UserIdAndUserSavedTrueOrderByCreatedDateDesc(userId);
@@ -34,6 +36,7 @@ public class ContractQueryService {
     return convertToListResponses(contracts);
   }
 
+  @Cacheable(cacheNames = "contracts-detail", key = "#contractId")
   public ContractResponse getContract(Long contractId, Long userId) {
     log.info("계약서 단건 조회 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);

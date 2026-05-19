@@ -94,7 +94,8 @@ public record ContractAnalysisDetailResponse(
       String clauseContent,
       String riskLevel,
       String legalReference,
-      String reasoningSummary) {
+      String reasoningSummary,
+      String category) {
 
     public static ClauseResult from(ContractAnalysisDocument.ClauseResult document) {
       return new ClauseResult(
@@ -102,7 +103,8 @@ public record ContractAnalysisDetailResponse(
           document.getClauseContent(),
           document.getRiskLevel(),
           document.getLegalReference(),
-          document.getReasoningSummary());
+          document.getReasoningSummary(),
+          document.getCategory());
     }
   }
 
