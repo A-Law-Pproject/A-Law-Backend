@@ -46,6 +46,10 @@ public record FastApiOcrResponse(
         @JsonProperty("error")
         String error,
 
+        @Schema(description = "마스킹된 S3 이미지 URL (개인정보 블러 처리)")
+        @JsonProperty("masked_image_url")
+        String maskedImageUrl,
+
         // Spring에서 주입 (FastAPI 응답에는 없는 필드)
         @Schema(description = "생성된 계약서 ID")
         @JsonProperty("contract_id")

@@ -46,10 +46,17 @@ public class ContractService {
       FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key, imageUrl);
       log.info("OCR 완료 - 단어 수: {}", ocrResponse.words() != null ? ocrResponse.words().size() : 0);
 
+      // 마스킹된 URL이 있으면 원본 삭제 후 마스킹 URL 사용
+      String effectiveImageUrl = ocrResponse.maskedImageUrl() != null ? ocrResponse.maskedImageUrl() : imageUrl;
+      if (ocrResponse.maskedImageUrl() != null) {
+        s3Service.deleteFile(s3Key);
+        log.info("원본 S3 파일 삭제 완료, 마스킹 URL 사용: {}", effectiveImageUrl);
+      }
+
       User user = userRepository.findById(userId)
               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
 
-      Contract contract = Contract.of(user, title, imageUrl, contractType);
+      Contract contract = Contract.of(user, title, effectiveImageUrl, contractType);
       contract.confirmSave(title, contractType);
       contract.updateRawText(ocrResponse.fullText());
 
@@ -90,11 +97,18 @@ public class ContractService {
               ocrResponse.imageWidth(), ocrResponse.imageHeight(),
               ocrResponse.processingTime());
 
-      // 4. Contract PostgreSQL 저장 (title은 파일명으로 임시 저장, contractType은 나중에 수동 입력)
+      // 마스킹된 URL이 있으면 원본 삭제 후 마스킹 URL 사용
+      String effectiveImageUrl = ocrResponse.maskedImageUrl() != null ? ocrResponse.maskedImageUrl() : imageUrl;
+      if (ocrResponse.maskedImageUrl() != null) {
+        s3Service.deleteFile(s3Key);
+        log.info("원본 S3 파일 삭제 완료, 마스킹 URL 사용: {}", effectiveImageUrl);
+      }
+
+      // 3. Contract PostgreSQL 저장 (title은 파일명으로 임시 저장, contractType은 나중에 수동 입력)
       User user = userRepository.findById(userId)
               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
       String tempTitle = file.getOriginalFilename() != null ? file.getOriginalFilename() : "미제목";
-      Contract contract = Contract.of(user, tempTitle, imageUrl, null);
+      Contract contract = Contract.of(user, tempTitle, effectiveImageUrl, null);
       Contract savedContract = contractRepository.save(contract);
       log.info("Contract PostgreSQL 저장 완료 - contractId={}", savedContract.getContractId());
 
@@ -117,11 +131,11 @@ public class ContractService {
       publisher.publish(message);
       log.info("계약서 분석 작업 큐에 전송 완료 - jobId: {}, s3Key: {}, contractId: {}", jobId, s3Key, savedContract.getContractId());
 
-      // 5. imageUrl을 포함한 최종 응답 반환
+      // 4. 최종 응답 반환 (마스킹 URL 우선)
       return new FastApiOcrResponse(
               ocrResponse.success(),
               ocrResponse.processingTime(),
-              imageUrl,
+              effectiveImageUrl,
               ocrResponse.imageWidth(),
               ocrResponse.imageHeight(),
               ocrResponse.fullText(),
@@ -131,6 +145,7 @@ public class ContractService {
               ocrResponse.words(),
               ocrResponse.warnings(),
               ocrResponse.error(),
+              ocrResponse.maskedImageUrl(),
               savedContract.getContractId(),
               jobId
       );
