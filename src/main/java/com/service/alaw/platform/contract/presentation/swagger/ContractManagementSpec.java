@@ -2,10 +2,10 @@ package com.service.alaw.platform.contract.presentation.swagger;
 
 import com.service.alaw.common.aop.CurrentUserId;
 import com.service.alaw.common.response.ApiResponse;
-import com.service.alaw.platform.contract.application.dto.crud.ContractCreateRequest;
 import com.service.alaw.platform.contract.application.dto.crud.ContractListResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractUpdateRequest;
+import com.service.alaw.platform.contract.domain.entity.ContractType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,14 +14,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Contract Management", description = "계약서 관리 API")
 public interface ContractManagementSpec {
 
-  @Operation(summary = "계약서 생성", description = "새로운 계약서를 생성하여 내 문서함에 저장합니다.")
+  @Operation(summary = "계약서 생성", description = "파일 업로드 + OCR + 저장을 한 번에 처리합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "201",
@@ -29,14 +32,16 @@ public interface ContractManagementSpec {
         content = @Content(schema = @Schema(implementation = ContractResponse.class))),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "400",
-        description = "잘못된 요청 (유효성 검증 실패)"),
+        description = "잘못된 요청 (파일 없음 또는 지원하지 않는 형식)"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
         description = "인증 실패")
   })
   ResponseEntity<ApiResponse<ContractResponse>> createContract(
       @Parameter(hidden = true) @CurrentUserId Long userId,
-      @Valid @RequestBody ContractCreateRequest request);
+      @Parameter(description = "계약서 파일 (JPG, PNG, GIF, WEBP, PDF)") @RequestParam("file") MultipartFile file,
+      @Parameter(description = "계약서 제목") @RequestParam("title") String title,
+      @Parameter(description = "계약서 유형") @RequestParam(value = "contractType", required = false) ContractType contractType);
 
   @Operation(summary = "계약서 상세 조회", description = "계약서 ID로 특정 계약서의 상세 정보를 조회합니다.")
   @ApiResponses({
