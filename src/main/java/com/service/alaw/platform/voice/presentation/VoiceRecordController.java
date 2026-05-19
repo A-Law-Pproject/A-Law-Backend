@@ -32,6 +32,15 @@ public class VoiceRecordController implements VoiceRecordSpec {
     );
 
     @Override
+    @DeleteMapping("/voice-records/{voiceRecordId}")
+    public ResponseEntity<ApiResponse<Void>> deleteVoiceRecord(
+            @PathVariable Long voiceRecordId,
+            @CurrentUserId Long userId) {
+        voiceRecordService.deleteVoiceRecord(voiceRecordId, userId);
+        return ApiResponse.deleted();
+    }
+
+    @Override
     @GetMapping("/voice-records")
     public ResponseEntity<ApiResponse<List<VoiceRecordResponse>>> getMyVoiceRecords(
             @CurrentUserId Long userId) {

@@ -40,6 +40,17 @@ public class VoiceRecordService {
     private final VoiceRecordPublisher voiceRecordPublisher;
     private final VoiceAnalysisClient voiceAnalysisClient;
 
+    @Transactional
+    public void deleteVoiceRecord(Long voiceRecordId, Long userId) {
+        VoiceRecord voiceRecord = voiceRecordRepository.findById(voiceRecordId)
+                .filter(v -> v.getUser().getUserId().equals(userId))
+                .orElseThrow(() -> new ContractNotFoundException(CommonErrorCode.NOT_FOUND));
+
+        s3UploadService.deleteFile(voiceRecord.getS3Key());
+        voiceRecordRepository.delete(voiceRecord);
+        log.info("[VoiceRecord] 삭제 완료 - voiceRecordId={}, userId={}", voiceRecordId, userId);
+    }
+
     @Transactional(readOnly = true)
     public List<VoiceRecordResponse> getMyVoiceRecords(Long userId) {
         return voiceRecordRepository.findByUser_UserIdOrderByCreatedDateDesc(userId)

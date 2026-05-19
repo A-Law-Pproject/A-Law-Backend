@@ -19,6 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Voice Record", description = "음성 녹음 API")
 public interface VoiceRecordSpec {
 
+    @Operation(summary = "음성 녹음 삭제", description = "음성 녹음을 삭제합니다. 본인의 녹음만 삭제할 수 있으며 S3 파일도 함께 삭제됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "녹음을 찾을 수 없음")
+    })
+    ResponseEntity<ApiResponse<Void>> deleteVoiceRecord(
+            @Parameter(description = "음성 녹음 ID", required = true) @PathVariable Long voiceRecordId,
+            @Parameter(hidden = true) @CurrentUserId Long userId);
+
     @Operation(summary = "내 녹음 목록 조회", description = "로그인한 사용자의 모든 음성 녹음 목록을 최신순으로 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
