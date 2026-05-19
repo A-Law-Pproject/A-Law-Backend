@@ -7,13 +7,11 @@ import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.application.dto.analysis.ContractAnalysisMessage;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.ocr.FastApiOcrResponse;
-import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
 import com.service.alaw.platform.contract.domain.entity.AnalysisJob;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.entity.ContractType;
 import com.service.alaw.platform.contract.domain.repository.AnalysisJobRepository;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
-import com.service.alaw.platform.contract.domain.repository.OcrResultDocumentRepository;
 import com.service.alaw.platform.user.domain.entity.User;
 import com.service.alaw.platform.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +32,6 @@ public class ContractService {
   private final S3UploadService s3Service;
   private final OCRClient ocrClient;
   private final ContractAnalysisPublisher publisher;
-  private final OcrResultDocumentRepository ocrResultRepository;
   private final ContractRepository contractRepository;
   private final UserRepository userRepository;
   private final AnalysisJobRepository analysisJobRepository;
@@ -46,16 +43,8 @@ public class ContractService {
       String imageUrl = s3Service.getFileUrl(s3Key);
       log.info("S3 업로드 완료 - Key: {}", s3Key);
 
-      FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key);
+      FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key, imageUrl);
       log.info("OCR 완료 - 단어 수: {}", ocrResponse.words() != null ? ocrResponse.words().size() : 0);
-
-      OcrResultDocument ocrDocument = OcrResultDocument.of(
-              s3Key, imageUrl,
-              ocrResponse.imageWidth(), ocrResponse.imageHeight(),
-              ocrResponse.fullText(), ocrResponse.markdown(),
-              ocrResponse.contractData(), ocrResponse.validation(),
-              ocrResponse.words(), ocrResponse.warnings());
-      ocrResultRepository.save(ocrDocument);
 
       User user = userRepository.findById(userId)
               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
@@ -94,28 +83,12 @@ public class ContractService {
       String imageUrl = s3Service.getFileUrl(s3Key);
       log.info("S3 업로드 완료 - Key: {}, URL: {}", s3Key, imageUrl);
 
-      // 2. FastAPI OCR 호출
-      FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key);
+      // 2. FastAPI OCR 호출 (MongoDB 저장은 FastAPI에서 처리)
+      FastApiOcrResponse ocrResponse = ocrClient.callOCR(s3Key, imageUrl);
       log.info("OCR 완료 - 단어 수: {}, 이미지 크기: {}x{}, 처리시간: {}s",
               ocrResponse.words() != null ? ocrResponse.words().size() : 0,
               ocrResponse.imageWidth(), ocrResponse.imageHeight(),
               ocrResponse.processingTime());
-
-      // 3. OCR 결과 MongoDB 저장
-      OcrResultDocument ocrDocument = OcrResultDocument.of(
-              s3Key,
-              imageUrl,
-              ocrResponse.imageWidth(),
-              ocrResponse.imageHeight(),
-              ocrResponse.fullText(),
-              ocrResponse.markdown(),
-              ocrResponse.contractData(),
-              ocrResponse.validation(),
-              ocrResponse.words(),
-              ocrResponse.warnings()
-      );
-      ocrResultRepository.save(ocrDocument);
-      log.info("OCR 결과 MongoDB 저장 완료 - s3Key: {}", s3Key);
 
       // 4. Contract PostgreSQL 저장 (title은 파일명으로 임시 저장, contractType은 나중에 수동 입력)
       User user = userRepository.findById(userId)

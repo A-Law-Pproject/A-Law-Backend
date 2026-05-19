@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -27,14 +28,14 @@ public class OCRClient {
      * FastAPI /ocr에 동기 호출.
      * s3_key를 전달하면 FastAPI가 S3에서 이미지를 가져와 OCR 실행.
      */
-    public FastApiOcrResponse callOCR(String s3Key) {
+    public FastApiOcrResponse callOCR(String s3Key, String imageUrl) {
         log.info("FastAPI OCR 요청 - S3 Key: {}", s3Key);
 
         try {
             FastApiOcrResponse response = webClient.post()
                     .uri("/ai/contracts/ocr")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of("s3_key", s3Key))
+                    .bodyValue(buildOcrRequest(s3Key, imageUrl))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, resp ->
                             resp.bodyToMono(String.class)
@@ -57,5 +58,12 @@ public class OCRClient {
             log.error("FastAPI OCR 호출 실패 - S3 Key: {}, Error: {}", s3Key, e.getMessage());
             throw new FastApiException("OCR 처리 중 오류 발생: " + e.getMessage(), e);
         }
+    }
+
+    private Map<String, String> buildOcrRequest(String s3Key, String imageUrl) {
+        Map<String, String> body = new HashMap<>();
+        body.put("s3_key", s3Key);
+        body.put("image_url", imageUrl);
+        return body;
     }
 }

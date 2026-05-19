@@ -49,6 +49,7 @@ public class ContractQueryService {
         contract,
         resolveAnalysisId(contract, analysisDocument),
         resolveRawText(contract, ocrDocument),
+        ocrDocument.map(OcrResultDocument::getMarkdown).orElse(null),
         resolveWords(ocrDocument));
   }
 

@@ -16,14 +16,15 @@ public record ContractResponse(
     ContractType contractType,
     ContractStatus status,
     String rawText,
+    String markdown,
     List<OcrBlock> words,
     LocalDateTime createdAt) {
   public static ContractResponse from(Contract contract) {
-    return from(contract, contract.getAnalysisId(), contract.getRawText(), null);
+    return from(contract, contract.getAnalysisId(), contract.getRawText(), null, null);
   }
 
   public static ContractResponse from(
-      Contract contract, String analysisId, String rawText, List<OcrBlock> words) {
+      Contract contract, String analysisId, String rawText, String markdown, List<OcrBlock> words) {
     return new ContractResponse(
         contract.getContractId(),
         analysisId,
@@ -33,6 +34,7 @@ public record ContractResponse(
         contract.getContractType(),
         contract.getStatus(),
         rawText,
+        markdown,
         words,
         contract.getCreatedDate());
   }
