@@ -5,7 +5,6 @@ import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractUpdateRequest;
 import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
-import com.service.alaw.platform.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,14 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContractCommandService {
 
   private final ContractRepository contractRepository;
-  private final UserRepository userRepository;
   private final ContractValidator contractValidator;
 
   @CacheEvict(cacheNames = "contracts-list", key = "#userId")
   public ContractResponse createContract(Long userId, ContractCreateRequest request) {
     log.info("계약서 저장 확정 시작 - userId: {}, contractId: {}, title: {}", userId, request.contractId(), request.title());
     Contract contract = contractValidator.validateContractOwnership(request.contractId(), userId);
-    contract.confirmSave(request.title(), request.contractType());
+    String normalizedTitle =
+        contractValidator.validateAvailableTitleForUpdate(
+            request.contractId(), userId, request.title());
+    contract.confirmSave(normalizedTitle, request.contractType());
     contractRepository.save(contract);
     log.info("계약서 저장 확정 완료 - contractId: {}", contract.getContractId());
     return ContractResponse.from(contract);
@@ -41,7 +42,9 @@ public class ContractCommandService {
       Long contractId, Long userId, ContractUpdateRequest request) {
     log.info("계약서 수정 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);
-    contract.updateTitle(request.title());
+    String normalizedTitle =
+        contractValidator.validateAvailableTitleForUpdate(contractId, userId, request.title());
+    contract.updateTitle(normalizedTitle);
     log.info("계약서 수정 완료 - contractId: {}", contractId);
     return ContractResponse.from(contract);
   }

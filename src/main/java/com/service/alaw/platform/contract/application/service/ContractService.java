@@ -35,10 +35,12 @@ public class ContractService {
   private final ContractRepository contractRepository;
   private final UserRepository userRepository;
   private final AnalysisJobRepository analysisJobRepository;
+  private final ContractValidator contractValidator;
 
   @CacheEvict(cacheNames = "contracts-list", key = "#userId")
   public ContractResponse uploadAndSave(MultipartFile file, String title, ContractType contractType, Long userId) {
     try {
+      String normalizedTitle = contractValidator.validateAvailableTitleForCreate(userId, title);
       String s3Key = s3Service.upload(file);
       String imageUrl = s3Service.getFileUrl(s3Key);
       log.info("S3 업로드 완료 - Key: {}", s3Key);
@@ -56,8 +58,8 @@ public class ContractService {
       User user = userRepository.findById(userId)
               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
 
-      Contract contract = Contract.of(user, title, effectiveImageUrl, contractType);
-      contract.confirmSave(title, contractType);
+      Contract contract = Contract.of(user, normalizedTitle, effectiveImageUrl, contractType);
+      contract.confirmSave(normalizedTitle, contractType);
       contract.updateRawText(ocrResponse.fullText());
 
       String jobId = UUID.randomUUID().toString();

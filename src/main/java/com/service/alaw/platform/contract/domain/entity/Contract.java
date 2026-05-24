@@ -62,7 +62,7 @@ public class Contract extends BaseTimeEntity {
   @Builder
   protected Contract(User user, String title, String fileUrl, ContractType contractType) {
     this.user = user;
-    this.title = title;
+    this.title = normalizeTitle(title);
     this.fileUrl = fileUrl;
     this.contractType = contractType;
     this.bookmark = false;
@@ -82,7 +82,7 @@ public class Contract extends BaseTimeEntity {
   // 비즈니스 로직
   public void updateTitle(String title) {
     if (title != null) {
-      this.title = title;
+      this.title = normalizeTitle(title);
     }
   }
 
@@ -119,7 +119,7 @@ public class Contract extends BaseTimeEntity {
   }
 
   public void confirmSave(String title, ContractType contractType) {
-    this.title = title;
+    this.title = normalizeTitle(title);
     if (contractType != null) {
       this.contractType = contractType;
     }
@@ -128,5 +128,9 @@ public class Contract extends BaseTimeEntity {
 
   public void saveAnalysisResult(String summaryText, int riskCount) {
     this.status = ContractStatus.COMPLETED;
+  }
+
+  private static String normalizeTitle(String title) {
+    return title == null ? null : title.strip();
   }
 }

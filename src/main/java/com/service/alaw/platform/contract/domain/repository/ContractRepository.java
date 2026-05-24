@@ -26,4 +26,9 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
   List<Contract> findByUser_UserIdAndUserSavedTrueOrderByCreatedDateDesc(Long userId);
 
   Optional<Contract> findByContractIdAndUser_UserId(Long contractId, Long userId);
+
+  boolean existsByUser_UserIdAndTitleIgnoreCaseAndUserSavedTrue(Long userId, String title);
+
+  boolean existsByUser_UserIdAndTitleIgnoreCaseAndUserSavedTrueAndContractIdNot(
+      Long userId, String title, Long contractId);
 }
