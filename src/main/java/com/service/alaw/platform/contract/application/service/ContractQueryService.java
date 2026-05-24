@@ -2,7 +2,6 @@ package com.service.alaw.platform.contract.application.service;
 
 import com.service.alaw.platform.contract.application.dto.crud.ContractListResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
-import com.service.alaw.platform.contract.application.dto.ocr.OcrBlock;
 import com.service.alaw.platform.contract.domain.document.ContractAnalysisDocument;
 import com.service.alaw.platform.contract.domain.document.OcrResultDocument;
 import com.service.alaw.platform.contract.domain.entity.Contract;
@@ -49,8 +48,8 @@ public class ContractQueryService {
         contract,
         resolveAnalysisId(contract, analysisDocument),
         resolveRawText(contract, ocrDocument),
-        ocrDocument.map(OcrResultDocument::getMarkdown).orElse(null),
-        resolveWords(ocrDocument));
+        ocrDocument.orElse(null),
+        analysisDocument.orElse(null));
   }
 
   private List<ContractListResponse> convertToListResponses(List<Contract> contracts) {
@@ -82,9 +81,5 @@ public class ContractQueryService {
       return contract.getRawText();
     }
     return ocrDocument.map(OcrResultDocument::getFullText).orElse(null);
-  }
-
-  private List<OcrBlock> resolveWords(Optional<OcrResultDocument> ocrDocument) {
-    return ocrDocument.map(OcrResultDocument::getWords).orElse(null);
   }
 }
