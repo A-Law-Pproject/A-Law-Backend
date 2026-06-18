@@ -2,6 +2,7 @@ package com.service.alaw.platform.contract.application.service;
 
 import com.service.alaw.common.exception.NotFoundException;
 import com.service.alaw.common.exception.code.CommonErrorCode;
+import com.service.alaw.infra.s3.S3UploadService;
 import com.service.alaw.platform.contract.application.dto.crud.ContractCreateRequest;
 import com.service.alaw.platform.contract.application.dto.crud.ContractResponse;
 import com.service.alaw.platform.contract.application.dto.crud.ContractUpdateRequest;
@@ -9,7 +10,10 @@ import com.service.alaw.platform.contract.domain.entity.Contract;
 import com.service.alaw.platform.contract.domain.repository.ContractRepository;
 import com.service.alaw.platform.user.domain.entity.User;
 import com.service.alaw.platform.user.domain.repository.UserRepository;
+import com.service.alaw.platform.voice.domain.entity.VoiceRecord;
+import com.service.alaw.platform.voice.domain.repository.VoiceRecordRepository;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,8 @@ public class ContractCommandService {
   private final ContractRepository contractRepository;
   private final UserRepository userRepository;
   private final ContractValidator contractValidator;
+  private final VoiceRecordRepository voiceRecordRepository;
+  private final S3UploadService s3UploadService;
 
   public ContractResponse createContract(Long userId, ContractCreateRequest request) {
     log.info("계약서 생성 시작 - userId: {}, title: {}", userId, request.title());
@@ -45,6 +51,14 @@ public class ContractCommandService {
   public void deleteContract(Long contractId, Long userId) {
     log.info("계약서 삭제 시작 - contractId: {}, userId: {}", contractId, userId);
     Contract contract = contractValidator.validateContractOwnership(contractId, userId);
+
+    // 연결된 음성 녹음 S3 파일 및 DB 레코드 먼저 삭제
+    List<VoiceRecord> voiceRecords = voiceRecordRepository.findAllByContract_ContractIdAndUser_UserId(contractId, userId);
+    for (VoiceRecord voiceRecord : voiceRecords) {
+      s3UploadService.delete(voiceRecord.getS3Key());
+    }
+    voiceRecordRepository.deleteAll(voiceRecords);
+
     contractRepository.delete(contract);
     log.info("계약서 삭제 완료 - contractId: {}", contractId);
   }
@@ -59,14 +73,6 @@ public class ContractCommandService {
       contract.unbookmark();
     }
     log.info("북마크 변경 완료 - contractId: {}", contractId);
-  }
-
-  public String saveRawText(Long contractId, Long userId, String textContent) {
-    log.info("원문 텍스트 저장 시작 - contractId: {}, userId: {}, 텍스트 길이: {}", contractId, userId, textContent.length());
-    Contract contract = contractValidator.validateContractOwnership(contractId, userId);
-    contract.updateRawText(textContent);
-    log.info("원문 텍스트 저장 완료 - contractId: {}", contractId);
-    return contract.getRawText();
   }
 
   private User findUserById(Long userId) {

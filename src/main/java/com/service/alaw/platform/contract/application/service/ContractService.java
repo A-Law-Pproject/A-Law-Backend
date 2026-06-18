@@ -71,6 +71,7 @@ public class ContractService {
               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. userId=" + userId));
       String tempTitle = file.getOriginalFilename() != null ? file.getOriginalFilename() : "미제목";
       Contract contract = Contract.of(user, tempTitle, imageUrl, null);
+      contract.updateRawText(ocrResponse.fullText());
       Contract savedContract = contractRepository.save(contract);
       log.info("Contract PostgreSQL 저장 완료 - contractId={}", savedContract.getContractId());
 

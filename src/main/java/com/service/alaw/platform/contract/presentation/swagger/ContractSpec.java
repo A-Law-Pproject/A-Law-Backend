@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "Contract", description = "계약서 OCR 및 분석 API")
+@Tag(name = "Contract Analysis", description = "계약서 OCR 및 분석 API")
 public interface ContractSpec {
 
   @Operation(

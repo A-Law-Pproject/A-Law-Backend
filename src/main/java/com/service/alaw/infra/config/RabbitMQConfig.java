@@ -30,6 +30,21 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.result-queue}")
     private String resultQueueName;       // contract-analysis-result-queue
 
+    @Value("${app.rabbitmq.voice-exchange}")
+    private String voiceExchangeName;     // voice-analysis-ex
+
+    @Value("${app.rabbitmq.voice-queue}")
+    private String voiceQueueName;        // voice-record-queue
+
+    @Value("${app.rabbitmq.voice-routing-key}")
+    private String voiceRoutingKey;       // voice.record
+
+    @Value("${app.rabbitmq.voice-result-queue}")
+    private String voiceResultQueueName;  // voice-result-queue
+
+    @Value("${app.rabbitmq.voice-result-routing-key}")
+    private String voiceResultRoutingKey; // voice.result
+
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
@@ -98,6 +113,40 @@ public class RabbitMQConfig {
     @Bean
     public Binding contractResultBinding() {
         return BindingBuilder.bind(contractResultQueue()).to(aiResultExchange()).with("ai.result");
+    }
+
+    // ─── Voice: Spring → FastAPI ─────────────────────────────────────────────
+
+    @Bean
+    public DirectExchange voiceExchange() {
+        return new DirectExchange(voiceExchangeName, true, false);
+    }
+
+    @Bean
+    public Queue voiceQueue() {
+        return new Queue(voiceQueueName, true);
+    }
+
+    @Bean
+    public Binding voiceBinding() {
+        return BindingBuilder.bind(voiceQueue()).to(voiceExchange()).with(voiceRoutingKey);
+    }
+
+    // ─── Voice: FastAPI → Spring ─────────────────────────────────────────────
+
+    @Bean
+    public DirectExchange voiceResultExchange() {
+        return new DirectExchange("voice.analysis.result", true, false);
+    }
+
+    @Bean
+    public Queue voiceResultQueue() {
+        return new Queue(voiceResultQueueName, true);
+    }
+
+    @Bean
+    public Binding voiceResultBinding() {
+        return BindingBuilder.bind(voiceResultQueue()).to(voiceResultExchange()).with(voiceResultRoutingKey);
     }
 
     @Bean
